@@ -1,0 +1,217 @@
+<main class="responsive max center-align" style="color: #0f15fd">
+    <h5 class="large">A la découverte d'Impact Framework !</h5>
+    <div class="grid">
+        <div class="s6">
+            <img style="widtsh: 100%;heisght: auto;" classs="large-height no-scroll middle-align center-align"
+                 src="/images/cloud_nord2.png">
+        </div>
+        <div class="s6">
+            <img style="widtsh: 100%;heisght: auto;" classs="large-height no-scroll middle-align center-align"
+                 src="/images/zatsit.svg">
+        </div>
+    </div>
+    </div>
+</main>
+---
+<header>
+    <nav>
+        <h5 class="max center-left"></h5>
+        <div class="grid center-right">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+<main class="main responsive max large-height">
+
+    <h2>This is a simple slide with just <em>text</em></h2>
+    <ul>
+        <li>Very interesting bullet point</li>
+        <li>Even more interesting bullet point</li>
+        <li>Not so interesting bullet point</li>
+    </ul>
+</main>
+---
+<header>
+    <nav>
+        <h5 class="max center-left"></h5>
+        <div class="grid center-right">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+<main class="main responsive max large-height">
+
+    <div class="logos">
+        <img src="/images/kubernetes.png"/>
+        <img src="/images/kubernetes.png"/>
+    </div>
+</main>
+---
+<header>
+    <nav>
+        <h5 class="max center-left">Snapshot</h5>
+        <div class="grid center-right">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+<main class="main responsive max large-height">
+
+    <img src="/images/bazel.png"/>
+
+    <img id="qr" src="/qrcode?url=https://bazel.build/"/>
+</main>
+---
+<header>
+    <nav>
+        <h5 class="max center-left">Diagram</h5>
+        <div class="grid center-right">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+<main class="main responsive max large-height">
+
+<pre class="mermaid">
+    pie title NETFLIX
+         "Time spent looking for movie" : 90
+         "Time spent watching it" : 10
+</pre>
+</main>
+
+---
+<header>
+    <nav>
+        <h5 class="max center-left">Terminal</h5>
+        <div class="grid center-right">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+<main class="main responsive max large-height">
+
+    <split-view class="large-height">
+        <web-term path="folder"></web-term>
+    </split-view>
+</main>
+
+---
+<header>
+    <nav>
+        <h5 class="max center-left">Shell &amp; Browser - <strong>Type `python3 -m http.server` in the shell
+            window</strong></h5>
+        <div class="grid center-right">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+<main class="mai responsive max large-height">
+    <split-view class="large-height">
+        <web-term path="folder"></web-term>
+        <web-browser src="https://if.greensoftware.foundation/"></web-browser>
+    </split-view>
+</main>
+---
+<header class="fixded">
+    <nav>
+        <h5 class="max center-left no-margin">Code samples</h5>
+        <div class="grid center-right no-margin">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+
+<split-view class="large-height">
+    <source-code folder="sources"
+                 files="main.go pod.yaml test.txt"
+                 start-lines="26;18,21"
+                 end-lines="27;18,22">
+    </source-code>
+</split-view>
+
+---
+
+<h1>Draw on slides</h1>
+
+<h4>On the left border of the page there's a pen that can be used to draw on the slides.<br/>
+    Type <em>&lt;ESC&gt;</em> to exit draw mode.</h4>
+
+<img src="/images/bazel.png"/>
+<script src="/js/draw.js"></script>
+
+<style>
+    img {
+        height: 60%;
+    }
+</style>
+
+---
+<header class="fixded">
+    <nav>
+        <h5 class="max center-left no-margin">Code samples</h5>
+        <div class="grid center-right no-margin">
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/zatsit_logo.svg">
+            </div>
+            <div class="circle transparent s6">
+                <img class="responsive" src="/images/cloud_nord2.png">
+            </div>
+        </div>
+    </nav>
+</header>
+
+<split-view class="large-height">
+        <vs-code path="sources"></vs-code>
+</split-view>
+---
+
+<h1>Speaker notes</h1>
+
+<h4>If speaker notes are provided, they live at <a href="/speakernotes" target="_blank">/speakernotes</a>
+
+    <speaker-notes>
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+        This text is <b>only for the speaker</b>. It won't be displayed to the audience.
+    </speaker-notes>

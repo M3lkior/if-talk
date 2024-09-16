@@ -4,6 +4,11 @@
 		<meta charset="utf-8">
 		<title>Demo {{ .CurrentStep }}/{{ .StepCount }}</title>
 		<link rel="stylesheet" href="/style.css?hash={{ "style.css" | hash }}">
+		<link href="https://cdn.jsdelivr.net/npm/beercss@3.7.8/dist/cdn/beer.min.css" rel="stylesheet">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
 		<script>
 			const CurrentStep = {{ .CurrentStep }};
 			const StepCount = {{ .StepCount }};
@@ -11,13 +16,28 @@
 			const PrevURL = '{{ .PrevURL }}';
 		</script>
 	</head>
-	<body>
-		<div id="top">
+	<body class="light poppins-regular">
+    <div id="app" class="responsive max ">
+<!--		<main class="responsive max ">-->
+		<!--	<div id="top_">-->
 		  {{ .HTML }}
-	  	<nav-arrows previous="{{ .PrevURL }}" next="{{ .NextURL }}"></nav-arrows>
-		</div>
-		<div id="progression" style="width: calc(100vw * {{ .CurrentStep }} / {{ .StepCount }})"></div>
+			<nav-arrows previous="{{ .PrevURL }}" next="{{ .NextURL }}"></nav-arrows>
+	<!--		</div>-->
+			<footer class="fixed">
+				<div class="grid">
+					<div class="s12">
+				<h5 id="progression" class="no-margin" style="width: calc(100vw * {{ .CurrentStep }} / {{ .StepCount }})"></h5>
+					</div>
+					<div class="s12">
+				<div class="right-align poppins-thin">Slides framework adapted from <span class="poppins-bold">demoit</span></div>
+					</div>
+				</div>
+			</footer>
+<!--		</main>-->
+    </div>
 	</body>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.7.8/dist/cdn/beer.min.js"></script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 	<script type="module" src="/js/demoit.js?hash={{ "js/demoit.js" | hash }}"></script>
 	{{ if .DevMode }}<script src="/livereload.js"></script>{{ end }}
 </html>
