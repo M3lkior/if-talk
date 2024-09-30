@@ -1,0 +1,38 @@
+name: pipeline example
+description:
+
+tree:
+  children:
+    github-storage-for-if-docs:
+      pipeline:
+        observe:
+          - mock-observations
+        compute:
+          - interpolate
+          - cpu-factor-to-wattage
+          - wattage-times-duration
+          - wattage-to-energy-kwh
+          - calculate-vcpu-ratio
+          - correct-cpu-energy-for-vcpu-ratio
+          - sum-energy-components
+          - operational-carbon
+          - sum-carbon
+          - sci
+      defaults:
+        cpu/thermal-design-power: 100
+        vcpus-total: 1
+        vcpus-allocated: 1
+        network/energy: 0.001
+      inputs:
+        - timestamp: '2024-07-22T00:00:00'
+          duration: 3600
+          site-visits: 228
+          cpu/utilization: 45
+          component: 1
+          users: 1100
+        - timestamp: '2024-08-18T00:00:00'
+          duration: 3600
+          site-visits: 31
+          cpu/utilization: 84
+          component: 1
+          users: 1038

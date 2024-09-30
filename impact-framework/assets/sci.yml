@@ -1,0 +1,303 @@
+name: sci example
+description:
+tags:
+aggregation:
+  metrics:
+    - carbon
+    - sci
+    - energy
+  type: both
+  
+initialize:
+  plugins:
+    interpolate:
+      path: builtin
+      method: Interpolation
+      global-config:
+        method: linear
+        x:
+          - 0
+          - 10
+          - 50
+          - 100
+        'y':
+          - 0.12
+          - 0.32
+          - 0.75
+          - 1.02
+        input-parameter: cpu/utilization
+        output-parameter: cpu-factor
+    cpu-factor-to-wattage:
+      path: builtin
+      method: Multiply
+      global-config:
+        input-parameters:
+          - cpu-factor
+          - cpu/thermal-design-power
+        output-parameter: cpu-wattage
+    wattage-times-duration:
+      path: builtin
+      method: Multiply
+      global-config:
+        input-parameters:
+          - cpu-wattage
+          - duration
+        output-parameter: cpu-wattage-times-duration
+    wattage-to-energy-kwh:
+      path: builtin
+      method: Divide
+      global-config:
+        numerator: cpu-wattage-times-duration
+        denominator: 3600000
+        output: cpu-energy-raw
+    calculate-vcpu-ratio:
+      path: builtin
+      method: Divide
+      global-config:
+        numerator: vcpus-total
+        denominator: vcpus-allocated
+        output: vcpu-ratio
+    correct-cpu-energy-for-vcpu-ratio:
+      path: builtin
+      method: Divide
+      global-config:
+        numerator: cpu-energy-raw
+        denominator: vcpu-ratio
+        output: cpu/energy
+    sum-energy-components:
+      path: builtin
+      method: Sum
+      global-config:
+        input-parameters:
+          - cpu/energy
+          - network/energy
+        output-parameter: energy
+    embodied-carbon:
+      path: builtin
+      method: SciEmbodied
+      global-config:
+        output-parameter: carbon-embodied
+    operational-carbon:
+      path: builtin
+      method: Multiply
+      global-config:
+        input-parameters:
+          - energy
+          - grid/carbon-intensity
+        output-parameter: carbon-operational
+    sum-carbon:
+      path: builtin
+      method: Sum
+      global-config:
+        input-parameters:
+          - carbon-operational
+          - embodied-carbon
+        output-parameter: carbon
+    sci:
+      path: builtin
+      method: Sci
+      global-config:
+        functional-unit: users
+    coffee:
+        method: Coffee
+        path: 'grasp'
+        global-config:
+          units: 1000
+          output-parameter: coffee
+
+tree:
+  children:
+    github-storage-for-if-docs:
+      pipeline:
+        compute:
+          - interpolate
+          - cpu-factor-to-wattage
+          - wattage-times-duration
+          - wattage-to-energy-kwh
+          - calculate-vcpu-ratio
+          - correct-cpu-energy-for-vcpu-ratio
+          - sum-energy-components
+          - embodied-carbon
+          - operational-carbon
+          - sum-carbon
+          - coffee
+          - sci
+          
+      defaults:
+        device/emissions-embodied: 001
+        device/expected-lifespan: 2
+        embodied-carbon: 5
+        cpu/thermal-design-power: 100
+        vcpus-total: 1
+        vcpus-allocated: 1
+        network/energy: 0.001
+        grid/carbon-intensity: 130
+      inputs:
+        - timestamp: '2024-07-22T00:00:00'
+          duration: 3600    
+          site-visits: 228
+          cpu/utilization: 45
+          component: 1
+          users: 1100
+        - timestamp: '2024-07-23T00:00:00'
+          duration: 3600    
+          site-visits: 216
+          cpu/utilization: 30
+          component: 1
+          users: 1050
+        - timestamp: '2024-07-24T00:00:00'
+          duration: 3600    
+          site-visits: 203
+          cpu/utilization: 50
+          component: 1
+          users: 1055
+        - timestamp: '2024-07-25T00:00:00'
+          duration: 3600    
+          site-visits: 203
+          cpu/utilization: 33
+          component: 1
+          users: 996
+        - timestamp: '2024-07-26T00:00:00'
+          duration: 3600    
+          site-visits: 172
+          cpu/utilization: 29
+          component: 1
+          users: 899
+        - timestamp: '2024-07-27T00:00:00'
+          duration: 3600    
+          site-visits: 38
+          cpu/utilization: 68
+          component: 1
+          users: 1080
+        - timestamp: '2024-07-28T00:00:00'
+          duration: 3600    
+          site-visits: 63
+          cpu/utilization: 49
+          component: 1
+          users: 1099
+        - timestamp: '2024-07-29T00:00:00'
+          duration: 3600    
+          site-visits: 621
+          cpu/utilization: 77
+          component: 1
+          users: 1120
+        - timestamp: '2024-07-30T00:00:00'
+          duration: 3600    
+          site-visits: 181
+          cpu/utilization: 31
+          component: 1
+          users: 1125
+        - timestamp: '2024-07-31T00:00:00'
+          duration: 3600    
+          site-visits: 213
+          cpu/utilization: 29
+          component: 1
+          users: 1113
+        - timestamp: '2024-08-01T00:00:00'
+          duration: 3600    
+          site-visits: 167
+          cpu/utilization: 29
+          component: 1
+          users: 1111
+        - timestamp: '2024-08-02T00:00:00'
+          duration: 3600    
+          site-visits: 428
+          cpu/utilization: 29
+          component: 1
+          users: 1230
+        - timestamp: '2024-08-03T00:00:00'
+          duration: 3600    
+          site-visits: 58
+          cpu/utilization: 64
+          component: 1
+          users: 1223
+        - timestamp: '2024-08-04T00:00:00'
+          duration: 3600    
+          site-visits: 66
+          cpu/utilization: 59
+          component: 1
+          users: 1210
+        - timestamp: '2024-08-05T00:00:00'
+          duration: 3600    
+          site-visits: 301
+          cpu/utilization: 60
+          component: 1
+          users: 1011
+        - timestamp: '2024-08-06T00:00:00'
+          duration: 3600    
+          site-visits: 193
+          cpu/utilization: 35
+          component: 1
+          users: 999
+        - timestamp: '2024-08-07T00:00:00'
+          duration: 3600    
+          site-visits: 220
+          cpu/utilization: 37
+          component: 1
+          users: 1010
+        - timestamp: '2024-08-08T00:00:00'
+          duration: 3600    
+          site-visits: 215
+          cpu/utilization: 43
+          component: 1
+          users: 1008
+        - timestamp: '2024-08-09T00:00:00'
+          duration: 3600    
+          site-visits: 516
+          cpu/utilization: 28
+          component: 1
+          users: 992
+        - timestamp: '2024-08-10T00:00:00'
+          duration: 3600    
+          site-visits: 42
+          cpu/utilization: 39
+          component: 1
+          users: 1101
+        - timestamp: '2024-08-11T00:00:00'
+          duration: 3600    
+          cpu/utilization: 40
+          site-visits: 76
+          component: 1
+          users: 1000
+        - timestamp: '2024-08-12T00:00:00'
+          duration: 3600    
+          site-visits: 226
+          cpu/utilization: 55
+          component: 1
+          users: 845
+        - timestamp: '2024-08-13T00:00:00'
+          duration: 3600    
+          site-visits: 180
+          cpu/utilization: 62
+          component: 1
+          users: 1006
+        - timestamp: '2024-08-14T00:00:00'
+          duration: 3600    
+          site-visits: 232
+          cpu/utilization: 71
+          component: 1
+          users: 1076
+        - timestamp: '2024-08-15T00:00:00'
+          duration: 3600    
+          site-visits: 175
+          cpu/utilization: 75
+          component: 1
+          users: 1050
+        - timestamp: '2024-08-16T00:00:00'
+          duration: 3600    
+          site-visits: 235
+          cpu/utilization: 77
+          component: 1
+          users: 1047
+        - timestamp: '2024-08-17T00:00:00'
+          duration: 3600    
+          site-visits: 44
+          cpu/utilization: 80
+          component: 1
+          users: 1020
+        - timestamp: '2024-08-18T00:00:00'
+          duration: 3600    
+          site-visits: 31
+          cpu/utilization: 84
+          component: 1
+          users: 1038

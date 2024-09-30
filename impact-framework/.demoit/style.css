@@ -13,6 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+.title {
+    background: linear-gradient(to bottom, var(--color-main) 10%, white 90%);
+}
+
+#app {
+    background-color: white;
+}
 
 html, body, #top {
     margin: 0;
@@ -21,12 +28,34 @@ html, body, #top {
     font-size: 3vw;
 
     --color-text: rgb(61, 64, 67);
-    --color-main: rgb(66,133,244);
+    --color-main: #0f15fd;
+    --primary: #0f15fd;
+}
+
+blockquote {
+    border-inline-start-color: var(--color-main) !important;
 }
 
 html {
     width: 100%;
     height: 100%;
+}
+
+.xlarge-text {
+    font-size: 1.3rem !important;
+}
+.xlarge-height {
+    block-size: 64rem !important;
+}
+@media screen and (max-height: 1024px) {
+    .xlarge-height {
+        block-size: 45rem !important;
+    }
+}
+
+.full-width {
+    inline-size: 100% !important;
+    width: 100% !important;
 }
 
 body {
@@ -39,8 +68,8 @@ body {
 
 header {
     background-color: transparent !important;
-    color: #0f15fd;
-    border-bottom: solid 1px #0f15fd;
+    color: var(--color-main);
+    border-bottom: solid 1px var(--color-main);
 }
 #top {
     position: relative;
@@ -49,48 +78,6 @@ header {
     height: calc(100vw * 9 / 16);
     overflow: hidden;
     text-align: center;
-}
-
-h1 {
-    background: var(--color-main);
-    width: calc(100% - 6vw);
-    height: 4vw;
-    padding: 2vw;
-    overflow: hidden;
-    white-space: nowrap;
-    text-align: left;
-    text-overflow: ellipsis;
-    border-radius: 0 .8vw .8vw 0;
-    text-transform: none;
-    font-weight: normal;
-    font-size: 3vw;
-    color: white;
-}
-
-h2, h3, h4, h5, h6 {
-    margin-top: 0;
-}
-
-h2 {
-    font-size: 5vw;
-}
-
-h3 {
-    font-size: 4vw;
-}
-
-h4 {
-    font-size: 2vw;
-}
-
-h2:first-of-type {
-    margin-top: 6vw;
-}
-
-ul {
-    text-align: left;
-    display: inline-block;
-    margin: 0;
 }
 
 .logos {
@@ -207,6 +194,28 @@ em {
     height: 100%;
 }
 
+.main-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 150px 80px 20px;
+    margin-top: 30px;
+    color: #ffffff;
+    background-image: linear-gradient(180deg, var(--color-main) 0%, #2a0a89 100%);
+}
+
+.gb-shape-1 {
+    color: var(--base-2);
+    position: absolute;
+    overflow: hidden;
+    pointer-events: none;
+    line-height: 0;
+    left: 0;
+    right: 0;
+    top: -1px;
+    transform: scaleY(-1);
+}
 
 .poppins-thin {
     font-family: "Poppins", sans-serif;

@@ -40,7 +40,7 @@ class BaseHTMLElement extends HTMLElement {
 class FakeWindow extends BaseHTMLElement {
     static get styles() {
         return `
-        #main {
+        .main {
             font-size: 18px;
             padding: 2.1em 0 0 0;
             border-radius: 0.4em;
@@ -99,28 +99,65 @@ class FakeWindow extends BaseHTMLElement {
         #main:not(:first-of-type) {
             margin-top: 5px;
         }
-
-        .maximized {
-            position: absolute !important;
-            top: 1vw !important;
-            left: 1vw !important;
-            width: calc(100% - 2vw) !important;
-            height: calc(100% - 2vw) !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-            z-index: 20 !important;
-        }`;
+        
+        .dialog {
+            display: block;
+            border: none;
+            opacity: 0;
+            visibility: hidden;
+            position: fixed;
+            box-shadow: var(--elevate2);
+            color: var(--on-surface);
+            background-color: var(--surface-container-high);
+            padding-top: 1.5rem;
+            z-index: 100;
+            inset: 10% auto auto 50%;
+            min-inline-size: 20rem;
+            max-inline-size: 100%;
+            max-block-size: 80%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: all var(--speed3), 0s background-color;
+            transform: translate(-50%, -4rem);
+            outline: none;
+        }
+        
+        .dialog:is(.active, [open]):is(.left, .right, .top, .bottom, .max) {
+          transform: translate(0, 0);
+        }
+        .dialog:is(.active, [open]) {
+          opacity: 1;
+          visibility: visible;
+          transform: translate(-50%, 0);
+        }
+        
+        .dialog.max {
+             inset: 0 auto auto 0;
+            inline-size: 100%;
+            block-size: 95%;
+            max-inline-size: 100%;
+            max-block-size: 100%;
+            transform: translateY(4rem);
+            background-color: var(--surface);
+        }
+        
+         #url.dialog {
+            min-inline-size: 20rem;
+            max-inline-size: 100%;
+            inline-size: 93%%;
+        }
+       `;
     }
 
     render() {
         this.title = this.getAttribute('title') || '';
 
         return `
-        <div id="main">
+        <div id="main" class="main">
             <div id="bar">
                 <i id="red"></i><i id="yellow"></i><i id="green"></i>
                 ${this.title ? `<span id="title">${this.title}</span>` : ''}
-                <slot name="bar"></slot>
+                <slot name="bar" id="url"></slot>
             </div>
             <slot></slot>
         </div>`;
@@ -128,7 +165,13 @@ class FakeWindow extends BaseHTMLElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.$('#green').addEventListener('click', () => this.$('#main').classList.toggle('maximized'));
+        this.$('#green').addEventListener('click', () => {
+            this.$('#main').classList.toggle('dialog')
+            this.$('#main').classList.toggle('main')
+            this.$('#main').classList.toggle('max')
+            this.$('#main').classList.toggle('active')
+            this.$('#url').classList.toggle('dialog')
+        });
     }
 }
 
@@ -604,5 +647,5 @@ class VSCode extends BaseHTMLElement {
 customElements.define('vs-code', VSCode);
 
 // Diagrams
-import mermaid from 'https://unpkg.com/mermaid@9.2.2/dist/mermaid.esm.min.mjs';
+import mermaid from 'https://unpkg.com/mermaid@11.2.1/dist/mermaid.esm.min.mjs';
 mermaid.initialize({ startOnLoad: true });
