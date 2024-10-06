@@ -1,0 +1,96 @@
+name: energy-with-grafana
+description: Visualisons, Cloud Nord !
+tags:
+initialize:
+  outputs:
+    - yaml
+  plugins:
+    grafana-exporter:
+      method: GrafanaExport
+      path: 'grafana-export'
+    mock-observations-wordpress:
+      kind: plugin
+      method: MockObservations
+      path: '@grnsft/if-plugins'
+      global-config:
+        timestamp-from: 2024-10-10T10:00
+        timestamp-to: 2024-10-11T10:10
+        duration: 60
+        components:
+          - cloud/instance-type: Standard_B2s # Compute
+          - cloud/instance-type: Standard_A1_v2 # reverse proxy
+        generators:
+          common:
+            cloud/vendor: azure
+            cloud/region: francesouth
+            network/data-in: 1
+            network/data-out: 1
+          randint:
+            cpu/utilization:
+              min: 1
+              max: 20
+            memory/utilization:
+              min: 1
+              max: 40
+    cloud-metadata:
+      method: CloudMetadata
+      path: '@grnsft/if-plugins'
+    cloud-storage-metadata:
+      method: CloudStorageMetadata
+      path: 'if-carbon-hack-plugin'
+    storage-energy:
+      method: StorageEnergy
+      path: 'if-carbon-hack-plugin'
+    ramboll-resilio:
+      method: RambollResilio
+      path: 'if-carbon-hack-plugin'
+    sci-energy:
+      method: SciE
+      path: '@grnsft/if-plugins'
+    cpu-energy:
+      method: TeadsCurve
+      path: '@grnsft/if-unofficial-plugins'
+      global-config:
+        interpolation: spline
+    memory-energy:
+      method: EMem
+      path: '@grnsft/if-plugins'
+    network-energy:
+      method: ENet
+      path: '@grnsft/if-plugins'
+    map-to-correct-memory-input:
+      method: Coefficient
+      path: '@grnsft/if-plugins'
+      global-config:
+        input-parameter: memory-available
+        coefficient: 1
+        output-parameter: memory/capacity
+    map-to-energy:
+      method: Coefficient
+      path: '@grnsft/if-plugins'
+      global-config:
+        input-parameter: storage/energy
+        coefficient: 1
+        output-parameter: energy
+tree:
+  children:
+    zatsit-website-wordpress:
+      pipeline:
+        observe:
+          - mock-observations-wordpress
+          - cloud-metadata
+          - map-to-correct-memory-input
+        compute:
+          - cpu-energy
+          - network-energy
+          - memory-energy
+          - sci-energy
+          - grafana-exporter
+      config:
+        grafana-exporter:
+          output-path: /Users/ludovicdussart/Documents/Workplace/Talks/if-talk/impact-framework/sources/grafana/grafana-data/grafana-export.csv
+          headers:
+            - cloud/instance-type
+            - timestamp
+            - duration
+            - energy

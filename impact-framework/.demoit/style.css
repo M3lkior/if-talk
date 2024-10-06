@@ -36,13 +36,25 @@ blockquote {
     border-inline-start-color: var(--color-main) !important;
 }
 
+.xsmall-height {
+    block-size: 25rem !important;
+}
+.xsmall-width {
+    inline-size: 25rem !important;
+}
+
+blockquote h5 {
+    font-size: 2.1rem;
+}
+
 html {
     width: 100%;
     height: 100%;
 }
 
 .xlarge-text {
-    font-size: 1.3rem !important;
+    font-size: 1.6rem !important;
+    line-height: normal;
 }
 .xlarge-height {
     block-size: 64rem !important;
@@ -146,6 +158,7 @@ em {
 }
 
 #speaker-notes-contents {
+    /*font-size: 1.5vw !important;*/
     display: table-cell;
     vertical-align: middle;
     line-height: normal;

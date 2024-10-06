@@ -1,5 +1,5 @@
-name: mock-observation-demo
-description: example invoking mock-observation plugin
+name: oberve
+description: Observons, Cloud Nord !
 tags:
 initialize:
   outputs:
@@ -31,9 +31,6 @@ tree:
   children:
     child:
       pipeline:
-#        regroup:
-#            - cloud-region
-#            - instance-type
         observe:
           - mock-observations
       inputs:
