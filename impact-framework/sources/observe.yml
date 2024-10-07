@@ -11,8 +11,8 @@ initialize:
       path: '@grnsft/if-plugins'
       global-config:
         timestamp-from: 2023-07-06T00:00
-        timestamp-to: 2023-07-06T00:50
-        duration: 160
+        timestamp-to: 2023-07-06T00:01
+        duration: 60
         components:
           - instance-type: A1
           - instance-type: B1
