@@ -165,13 +165,20 @@ class FakeWindow extends BaseHTMLElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.$('#green').addEventListener('click', () => {
+        let toggleWindow = () => {
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    // Action to be executed when the Escape key is pressed
+                    toggleWindow()
+                }
+            });
             this.$('#main').classList.toggle('dialog')
             this.$('#main').classList.toggle('main')
             this.$('#main').classList.toggle('max')
             this.$('#main').classList.toggle('active')
             this.$('#url').classList.toggle('dialog')
-        });
+        };
+        this.$('#green').addEventListener('click', toggleWindow);
     }
 }
 
