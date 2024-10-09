@@ -66,6 +66,12 @@ class FakeWindow extends BaseHTMLElement {
             border-bottom: 2px solid #cbcbcb;
             border-radius: 0.4em 0.4em 0 0;
         }
+        
+        .dialog.active #bar {
+            padding: 0 !important;
+            height: 1.8em;
+            
+        }
 
         #title {
             font-size: 0.75em;
@@ -451,7 +457,7 @@ class WebTerm extends BaseHTMLElement {
     addTab() {
         const div = document.createElement('div');
         div.innerHTML = `
-        <fake-window title="bash ~ ${this.path}">
+        <fake-window title="">
             <a slot="bar" class="newtab" href="#">+</a>
             <iframe scrolling="no" src="/shell/${this.path}"></iframe>
         </fake-window>`;
@@ -645,7 +651,7 @@ class VSCode extends BaseHTMLElement {
         this.path = this.getAttribute('path');
 
         return `
-        <fake-window title="code ~ ${this.path}">
+        <fake-window title="">
             <iframe id="site" class="site" src="/beta/vscode/${this.path}"></iframe>
         </fake-window>`;
     }
