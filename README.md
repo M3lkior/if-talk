@@ -76,5 +76,13 @@ cd demoit
 go install
 ```
 
+```
+export GOPATH=$HOME/Go
+export GOROOT=/opt/homebrew/opt/go/libexec/
+export PATH=$PATH:$GOPATH/bin
+export PATH=$PATH:$GOROOT/bin
+
+```
+
 *This requires Go 1.19 or later.*
 

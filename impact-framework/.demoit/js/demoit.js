@@ -660,5 +660,5 @@ class VSCode extends BaseHTMLElement {
 customElements.define('vs-code', VSCode);
 
 // Diagrams
-import mermaid from 'https://unpkg.com/mermaid@11.2.1/dist/mermaid.esm.min.mjs';
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
 mermaid.initialize({ startOnLoad: true });
