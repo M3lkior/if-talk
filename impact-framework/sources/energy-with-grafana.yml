@@ -1,5 +1,5 @@
 name: energy-with-grafana
-description: Visualisons, Cloud Nord !
+description: Visualisons, Norauto !
 tags:
 initialize:
   outputs:
