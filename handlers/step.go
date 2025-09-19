@@ -89,7 +89,15 @@ func LastStep(w http.ResponseWriter, r *http.Request) {
 func readSteps(folder string) ([]Page, error) {
 	var steps []Page
 
-	content, err := os.ReadFile(filepath.Join(folder, "demoit.html"))
+	htmlPageName := "demoit.html"
+	if flags.Locale != nil && *flags.Locale != "" {
+		localized := fmt.Sprintf("demoit-%s.html", *flags.Locale)
+		if _, err := os.Stat(filepath.Join(folder, localized)); err == nil {
+			htmlPageName = localized
+		}
+	}
+
+	content, err := os.ReadFile(filepath.Join(folder, htmlPageName))
 	if err != nil {
 		return nil, err
 	}

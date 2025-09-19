@@ -39,6 +39,7 @@ func main() {
 	flags.WebServerPort = flag.Int("port", 8888, "presentation port")
 	flags.WebServerHost = flag.String("host", "localhost", "host to bind the presentation server")
 	flags.ShellPort = flag.Int("shellport", 9999, "shell server port (terminal)")
+	flags.Locale = flag.String("locale", "", "locale suffix (e.g. en, fr) to select demoit-<locale>.html")
 	flag.Parse()
 	if args := flag.Args(); len(args) > 0 {
 		files.Root = args[0]
