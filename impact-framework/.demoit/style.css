@@ -32,6 +32,9 @@ html, body, #top {
     --primary: #0f15fd;
 }
 
+#progression {
+    background-color: #0f15fd !important;
+}
 blockquote {
     border-inline-start-color: var(--color-main) !important;
 }
