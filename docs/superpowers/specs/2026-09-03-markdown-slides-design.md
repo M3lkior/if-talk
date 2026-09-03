@@ -121,7 +121,26 @@ Contrepartie assumée, à documenter : la barre de séparation Markdown `---` n'
 
 ### Frontmatter par slide
 
-Dans une slide, si la première ligne non vide est `---`, tout jusqu'au `---` suivant est du YAML ; le reste est le contenu. Une slide sans frontmatter est du contenu pur.
+Le `---` qui sépare deux slides **fait aussi office de fence ouvrante** du frontmatter de la slide suivante — c'est la forme des decks sli.dev, et c'est la seule qui évite d'écrire `---` deux fois de suite :
+
+```markdown
+---
+layout: cover
+---
+# Première slide
+
+---
+layout: split
+title: Deuxième slide
+---
+::term{path=sources}
+```
+
+La reconnaissance est **déterministe, sans sonde YAML** : un bloc est du frontmatter si sa première ligne est une paire `clé: valeur` dont la clé est **en minuscules** (`^[a-z][a-z0-9_-]*\s*:`), et il se termine au `---` suivant. Une prose Markdown après une rupture de slide commence par `#`, `*`, `<`, une majuscule ou une ligne vide — jamais par ça. En début de fichier, un `---` en première ligne joue le même rôle d'ouverture, si bien que la forme est identique partout.
+
+Limite assumée, à documenter : un paragraphe qui commencerait par un mot en minuscules suivi de `:` en colonne 0, et qui serait suivi d'un `---`, serait pris pour du frontmatter — la slide s'afficherait vide. L'alternative, tenter de parser le bloc en YAML, se trompe sur n'importe quelle ligne du genre `note: attention`, ce qui est strictement pire.
+
+Une slide sans frontmatter est du contenu pur.
 
 | Clé | Effet |
 |---|---|
@@ -369,7 +388,9 @@ Le repo n'a aucun test Go. `deck` est du code pur (entrée : fichiers, sortie : 
 Cas obligatoires :
 
 - `---` à l'intérieur d'un fence mermaid et d'un fence YAML : ne coupe pas ;
-- slide avec frontmatter, slide sans ;
+- slide avec frontmatter, slide sans, et **frontmatter sur une slide autre que la première** ;
+- prose commençant par `Note: attention` (majuscule) : reste du contenu ;
+- prose commençant par `note: attention` (minuscule) suivie d'un `---` : prise pour du frontmatter, limite documentée et épinglée ;
 - chaque directive du catalogue ;
 - `:::split` sans `cols`, avec `cols`, avec `cols` incohérent ;
 - `layout: split` avec `height`, et `:::split` dans une slide `layout: split` (erreur) ;
