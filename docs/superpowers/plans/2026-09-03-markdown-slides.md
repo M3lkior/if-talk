@@ -373,6 +373,75 @@ func TestSplitReadsFrontmatterAndBody(t *testing.T) {
 	}
 }
 
+// The separator that ends a slide is also the opening fence of the next
+// slide's frontmatter. This is the case the naive rule gets wrong, so it is
+// the case that matters most.
+func TestSplitReadsFrontmatterOnALaterSlide(t *testing.T) {
+	t.Parallel()
+
+	src := []byte("# Un\n\n---\nlayout: split\ntitle: Deux\n---\n::term{path=sources}\n\n---\n# Trois\n")
+
+	slides := deck.Split(src)
+
+	if len(slides) != 3 {
+		t.Fatalf("got %d slides, want 3", len(slides))
+	}
+	if slides[0].Frontmatter != nil {
+		t.Errorf("got frontmatter %q on the first slide, want none", slides[0].Frontmatter)
+	}
+	if got, want := string(slides[1].Frontmatter), "layout: split\ntitle: Deux\n"; got != want {
+		t.Errorf("got frontmatter %q, want %q", got, want)
+	}
+	if got, want := string(slides[1].Body), "::term{path=sources}\n\n"; got != want {
+		t.Errorf("got body %q, want %q", got, want)
+	}
+	if got, want := slides[1].StartLine, 4; got != want {
+		t.Errorf("got start line %d, want %d", got, want)
+	}
+	if got, want := slides[1].BodyLine, 7; got != want {
+		t.Errorf("got body line %d, want %d", got, want)
+	}
+	if got, want := string(slides[2].Body), "# Trois\n"; got != want {
+		t.Errorf("got body %q, want %q", got, want)
+	}
+}
+
+func TestSplitDoesNotMistakeProseForFrontmatter(t *testing.T) {
+	t.Parallel()
+
+	src := []byte("# Un\n\n---\nNote: attention, ceci est de la prose.\n---\n# Trois\n")
+
+	slides := deck.Split(src)
+
+	if len(slides) != 3 {
+		t.Fatalf("got %d slides, want 3 — a capitalized key is prose, not frontmatter", len(slides))
+	}
+	if slides[1].Frontmatter != nil {
+		t.Errorf("got frontmatter %q, want the line kept as body", slides[1].Frontmatter)
+	}
+	if got, want := string(slides[1].Body), "Note: attention, ceci est de la prose.\n"; got != want {
+		t.Errorf("got body %q, want %q", got, want)
+	}
+}
+
+// Documented limitation: a body paragraph that starts with a lowercase key at
+// column 0 and is followed by a --- is read as frontmatter. Pinned here so the
+// behaviour is a known trade-off rather than a surprise.
+func TestSplitTakesALowercaseKeyAsFrontmatter(t *testing.T) {
+	t.Parallel()
+
+	src := []byte("# Un\n\n---\nnote: ceci sera pris pour du frontmatter\n---\n# Trois\n")
+
+	slides := deck.Split(src)
+
+	if len(slides) != 2 {
+		t.Fatalf("got %d slides, want 2", len(slides))
+	}
+	if got, want := string(slides[1].Frontmatter), "note: ceci sera pris pour du frontmatter\n"; got != want {
+		t.Errorf("got frontmatter %q, want %q", got, want)
+	}
+}
+
 func TestSplitIgnoresSeparatorsInsideAFence(t *testing.T) {
 	t.Parallel()
 
@@ -439,15 +508,16 @@ type RawSlide struct {
 }
 
 // Split cuts a deck file into slides. A slide ends at a line of three or more
-// dashes that sits outside any code fence and outside the slide's own
-// frontmatter. A --- inside a ``` or ~~~ fence never cuts, which is what lets
-// a mermaid or YAML block contain one.
+// dashes that sits outside any code fence. A --- inside a ``` or ~~~ fence
+// never cuts, which is what lets a mermaid or YAML block contain one. That
+// same separator is the opening fence of the next slide's frontmatter, so a
+// deck never needs two --- in a row.
 func Split(src []byte) []RawSlide {
 	lines := splitLines(src)
 
 	var slides []RawSlide
-	for i := 0; ; {
-		slide, next, more := readSlide(lines, i)
+	for i, fileStart := 0, true; ; fileStart = false {
+		slide, next, more := readSlide(lines, i, fileStart)
 		slides = append(slides, slide)
 		if !more {
 			return slides
@@ -458,8 +528,8 @@ func Split(src []byte) []RawSlide {
 
 // readSlide reads one slide starting at lines[start]. It returns the slide, the
 // index of the next slide's first line, and whether a separator ended this one.
-func readSlide(lines []string, start int) (RawSlide, int, bool) {
-	frontmatter, bodyStart := readFrontmatter(lines, start)
+func readSlide(lines []string, start int, fileStart bool) (RawSlide, int, bool) {
+	frontmatter, bodyStart := readFrontmatter(lines, start, fileStart)
 	end, more := findSlideEnd(lines, bodyStart)
 
 	return RawSlide{
@@ -471,24 +541,66 @@ func readSlide(lines []string, start int) (RawSlide, int, bool) {
 }
 
 // readFrontmatter reads the YAML block at the top of a slide and returns it
-// with the index of the slide's first body line. An unterminated block is not
-// treated as frontmatter, so its opening line acts as a separator instead.
-func readFrontmatter(lines []string, start int) ([]byte, int) {
-	i := start
-	for i < len(lines) && strings.TrimSpace(lines[i]) == "" {
-		i++
+// with the index of the slide's first body line. The block's opening fence is
+// the --- that separated this slide from the previous one, already consumed by
+// the caller; for the first slide of the file it is a leading --- line. A
+// block is frontmatter when its first line is a lowercase `key:` pair, which
+// Markdown prose never is, and it ends at the next --- line. An unterminated
+// block is not treated as frontmatter.
+func readFrontmatter(lines []string, start int, fileStart bool) ([]byte, int) {
+	i := skipBlank(lines, start)
+
+	if fileStart && i < len(lines) && isSlideSeparator(lines[i]) {
+		i = skipBlank(lines, i+1)
 	}
-	if i >= len(lines) || !isSlideSeparator(lines[i]) {
+
+	if i >= len(lines) || !isFrontmatterStart(lines[i]) {
 		return nil, start
 	}
 
 	for j := i + 1; j < len(lines); j++ {
 		if isSlideSeparator(lines[j]) {
-			return []byte(strings.Join(lines[i+1:j], "")), j + 1
+			return []byte(strings.Join(lines[i:j], "")), j + 1
 		}
 	}
 
 	return nil, start
+}
+
+// skipBlank returns the index of the first non-blank line at or after start.
+func skipBlank(lines []string, start int) int {
+	i := start
+	for i < len(lines) && strings.TrimSpace(lines[i]) == "" {
+		i++
+	}
+
+	return i
+}
+
+// isFrontmatterStart reports whether the line opens a frontmatter block: a
+// lowercase key in column 0, followed by a colon. Prose after a slide break
+// starts with #, *, <, a capital or a blank line, so the --- that separates
+// two slides stays unambiguous without probing the block as YAML.
+func isFrontmatterStart(line string) bool {
+	trimmed := strings.TrimRight(line, "\r\n")
+
+	colon := strings.IndexByte(trimmed, ':')
+	if colon < 1 {
+		return false
+	}
+
+	for i := 0; i < colon; i++ {
+		c := trimmed[i]
+		lowercase := c >= 'a' && c <= 'z'
+		if i == 0 && !lowercase {
+			return false
+		}
+		if !lowercase && !(c >= '0' && c <= '9') && c != '_' && c != '-' {
+			return false
+		}
+	}
+
+	return true
 }
 
 // findSlideEnd returns the index of the separator that ends the slide, or
@@ -578,7 +690,7 @@ func isSlideSeparator(line string) bool {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `go test ./deck/ -v -run TestSplit`
-Expected: PASS, 4 tests
+Expected: PASS, 7 tests
 
 - [ ] **Step 5: Verify the format**
 
@@ -917,10 +1029,13 @@ func TestSplitCarriesItsHeightAsAClass(t *testing.T) {
 func TestTwoColonsIsNotADirectiveWithoutAName(t *testing.T) {
 	t.Parallel()
 
-	got, _ := render(t, "prose :: prose\n")
+	got, errs := render(t, "prose :: prose\n")
 
-	if strings.Contains(got, "<web-term") {
-		t.Fatalf("got %q, want no directive", got)
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if want := "<p>prose :: prose</p>"; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want it to contain %q — colons in prose stay prose", got, want)
 	}
 }
 ```
@@ -1486,7 +1601,7 @@ func TestCodeDirectiveAlwaysEmitsLineAttributes(t *testing.T) {
 	}
 	for _, want := range []string{`start-lines=""`, `end-lines=""`} {
 		if !strings.Contains(got, want) {
-			t.Errorf("got %q, want it to contain %q — demoit.js splits these attributes unconditionally", want, got)
+			t.Errorf("got %q, want it to contain %q — demoit.js splits these attributes unconditionally", got, want)
 		}
 	}
 }
@@ -2067,7 +2182,7 @@ func (r *fenceRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 // render writes a fenced code block.
 func (r *fenceRenderer) render(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
-		return ast.WalkSkipChildren, nil
+		return ast.WalkContinue, nil
 	}
 
 	block, ok := node.(*ast.FencedCodeBlock)
@@ -2790,7 +2905,7 @@ func Load(folder, locale string) ([]template.HTML, error) {
 		return nil, err
 	}
 
-	return markdownSlides(content, talk, NewLayouts(folder), filepath.Base(path))
+	return markdownSlides(content, talk, NewLayouts(folder), filepath.Base(path)), nil
 }
 
 // resolve finds the deck file of a presentation. A localized deck wins over
@@ -2838,7 +2953,9 @@ func htmlSlides(content []byte) []template.HTML {
 }
 
 // markdownSlides renders every slide of a Markdown deck through its layout.
-func markdownSlides(content []byte, talk Talk, layouts *Layouts, file string) ([]template.HTML, error) {
+// It returns no error: renderSlide turns each per-slide failure into a visible
+// error block so that one mistake costs one slide, never the whole deck.
+func markdownSlides(content []byte, talk Talk, layouts *Layouts, file string) []template.HTML {
 	raw := Split(content)
 
 	slides := make([]template.HTML, 0, len(raw))
@@ -2846,7 +2963,7 @@ func markdownSlides(content []byte, talk Talk, layouts *Layouts, file string) ([
 		slides = append(slides, renderSlide(rawSlide, talk, layouts, file))
 	}
 
-	return slides, nil
+	return slides
 }
 
 // renderSlide renders one slide, turning any problem into a visible error
@@ -3017,8 +3134,8 @@ func TestABrokenSlideDoesNotBreakTheDeck(t *testing.T) {
 	if !strings.Contains(string(slides[1]), "pas-un-layout") {
 		t.Errorf("got %q, want the broken slide to name the unknown layout", slides[1])
 	}
-	if !strings.Contains(string(slides[1]), "demoit.md:3") {
-		t.Errorf("got %q, want the error to point at demoit.md line 3", slides[1])
+	if !strings.Contains(string(slides[1]), "demoit.md:4") {
+		t.Errorf("got %q, want the error to point at demoit.md line 4, the slide's first line", slides[1])
 	}
 }
 
@@ -3540,3 +3657,5 @@ Two spec items are deliberately not their own task: `gofmt`/`go vet`/`go test` r
 **Type consistency.** `deck.Slide` is defined once, in Task 9, and Tasks 10 and 13 use exactly those field names. `directive.Node` is defined in Task 5 and mutated by name in Task 7 (`Name`, `Attrs`). `specs` gains entries in Tasks 6 (`code`) and 7 (`grid`, `col`) with the `spec` shape declared in Task 5. `directive.Extension` gains its `Context` field in Task 6, and Task 6 Step 6 updates the Task 5 test helper accordingly — the only backwards edit in the plan, and it is called out where it happens. `highlight.Write` is declared in Task 2 and consumed in Task 8 with the same signature.
 
 **Known risk.** The `reader.Advance` arithmetic in `blockParser.Continue` (Task 5) is the one piece copied in spirit rather than verbatim from a working implementation. Task 5 Step 8 names `goldmark-fences@v1.0.0/parser.go:186-193` as the reference to compare against if the indented-content test fails.
+
+**Amended before execution.** A pre-flight scan of this plan found six defects, all fixed above and recorded with their reasoning in `.superpowers/sdd/2026-09-03-markdown-slides/progress.md`. The blocking one: the original splitter could not see the frontmatter of any slide but the first, because the `---` opening it had already been eaten as the previous slide's separator — it would have failed two of the plan's own tests. The separator now doubles as the frontmatter's opening fence, recognised by a lowercase `key:` first line rather than by probing YAML. The spec's "Frontmatter par slide" section carries the same rule.
