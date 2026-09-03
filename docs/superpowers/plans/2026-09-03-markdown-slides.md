@@ -16,6 +16,7 @@
 - yaml is pinned to `gopkg.in/yaml.v3` **v3.0.1**.
 - No other new dependency. No Node toolchain, ever.
 - Dependencies are vendored: after **any** change to `go.mod`, run `go mod vendor`.
+- **The first task that imports a module must vendor it.** `go mod vendor` copies only packages the build imports, so Task 1 leaves `github.com/yuin/goldmark` and `gopkg.in/yaml.v3` recorded but with empty vendor entries. The task that writes the first `import` of one of them must, in the same commit: move that module's `require` line out of the `// indirect` block into the first `require` block and drop the `// indirect` comment; run `go mod vendor`; confirm the tree exists (`ls vendor/gopkg.in/yaml.v3` / `ls vendor/github.com/yuin/goldmark`); and confirm `go 1.19` is still the go directive with no `toolchain` line. Without this, `go build` fails with `cannot find module providing package` because the vendor directory is authoritative. First importers: **Task 4** for `yaml.v3`, **Task 5** for `goldmark`.
 - Do not change the `go 1.19` directive in `go.mod`, and do not change the `Dockerfile`.
 - Every new `.go` file in the engine carries the Apache-2.0 header, copied verbatim from `handlers/step.go:1-17`.
 - Test files live in the **external test package** (`package deck_test`, `package directive_test`, `package highlight_test`) — `golangci.yml` enables `testpackage`. Only exported API is testable; design the seams exported.
@@ -34,13 +35,13 @@
 **Files:**
 - Modify: `go.mod`
 - Modify: `go.sum`
-- Create: `vendor/github.com/yuin/goldmark/**`
-- Create: `vendor/gopkg.in/yaml.v3/**`
 - Modify: `vendor/modules.txt`
+
+`go mod vendor` copies only the packages the build actually imports. Nothing imports these two modules yet, so this task **declares and records** them — `modules.txt` gains a `## explicit` entry with no package lines — and the source trees arrive in the task that first imports each module (see Global Constraints).
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `github.com/yuin/goldmark` v1.7.8 and `gopkg.in/yaml.v3` v3.0.1, importable and vendored.
+- Produces: `github.com/yuin/goldmark` v1.7.8 and `gopkg.in/yaml.v3` v3.0.1 required at those exact versions in `go.mod`, recorded in `go.sum` and `vendor/modules.txt`.
 
 - [ ] **Step 1: Add the two dependencies at their pinned versions**
 
@@ -862,15 +863,29 @@ func LoadTalk(folder string) (Talk, error) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [ ] **Step 4: Vendor yaml.v3 — this is its first import**
+
+`deck/talk.go` is the first file in the repository to import `gopkg.in/yaml.v3`. Task 1 recorded the module but vendored no packages, so the build cannot resolve it yet.
+
+In `go.mod`, move `gopkg.in/yaml.v3 v3.0.1` out of the `// indirect` require block into the first `require` block, dropping the `// indirect` comment. Then:
+
+```bash
+go mod vendor
+ls vendor/gopkg.in/yaml.v3 && grep '^go ' go.mod && grep -c '^toolchain' go.mod
+```
+Expected: the vendored tree lists its files, `go 1.19`, and a toolchain count of `0`.
+
+- [ ] **Step 5: Run the test to verify it passes**
 
 Run: `go test ./deck/ -v -run TestLoadTalk`
 Expected: PASS, 3 tests
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
+
+The vendored tree belongs to this commit — the code and the dependency that makes it build travel together.
 
 ```bash
-git add deck/talk.go deck/talk_test.go
+git add deck/talk.go deck/talk_test.go go.mod go.sum vendor
 git commit -m "feat(deck): read .demoit/talk.yml"
 ```
 
@@ -1524,22 +1539,36 @@ func (Extension) Extend(md goldmark.Markdown) {
 }
 ```
 
-- [ ] **Step 8: Run the tests to verify they pass**
+- [ ] **Step 8: Vendor goldmark — this is its first import**
+
+`deck/directive/` is the first package in the repository to import `github.com/yuin/goldmark`. Task 1 recorded the module but vendored no packages, so the build cannot resolve it yet.
+
+In `go.mod`, move `github.com/yuin/goldmark v1.7.8` out of the `// indirect` require block into the first `require` block, dropping the `// indirect` comment. Then:
+
+```bash
+go mod vendor
+ls vendor/github.com/yuin/goldmark && grep '^go ' go.mod && grep -c '^toolchain' go.mod
+```
+Expected: the vendored tree lists its files, `go 1.19`, and a toolchain count of `0`.
+
+- [ ] **Step 9: Run the tests to verify they pass**
 
 Run: `go test ./deck/directive/ -v`
 Expected: PASS, 7 tests
 
-If `TestIndentedContainerContentIsNotACodeBlock` fails, the `reader.Advance` arithmetic in `Continue` is the suspect: compare it against `goldmark-fences@v1.0.0/parser.go:186-193`, which is the working reference for content-indent stripping.
+If `TestIndentedContainerContentIsNotACodeBlock` fails, the `reader.Advance` arithmetic in `Continue` is the suspect: compare it against `goldmark-fences@v1.0.0/parser.go:186-193`, which is the working reference for content-indent stripping. That module is not a dependency of this repo — read it in the module cache at `$(go env GOMODCACHE)/github.com/stefanfritsch/goldmark-fences@v1.0.0/parser.go`, and do not add it to `go.mod`.
 
-- [ ] **Step 9: Verify the format**
+- [ ] **Step 10: Verify the format**
 
 Run: `gofmt -l . && go vet ./deck/...`
 Expected: no output from either
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 11: Commit**
+
+The vendored tree belongs to this commit — the code and the dependency that makes it build travel together.
 
 ```bash
-git add deck/directive
+git add deck/directive go.mod go.sum vendor
 git commit -m "feat(deck): add ::: and :: block directives to goldmark"
 ```
 
