@@ -1,0 +1,6 @@
+{{ template "header" . }}<main class="responsive max {{ .Class }}">
+<split-view class="{{ .Height }}-height">
+{{ .Content }}
+</split-view>
+</main>
+{{ template "source" . }}{{ template "notes" . }}

@@ -18,7 +18,6 @@ limitations under the License.
 package handlers
 
 import (
-	"bytes"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -28,6 +27,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/dgageot/demoit/deck"
 	"github.com/dgageot/demoit/files"
 	"github.com/dgageot/demoit/flags"
 	"github.com/gorilla/mux"
@@ -87,33 +87,26 @@ func LastStep(w http.ResponseWriter, r *http.Request) {
 }
 
 func readSteps(folder string) ([]Page, error) {
-	var steps []Page
-
-	htmlPageName := "demoit.html"
-	if flags.Locale != nil && *flags.Locale != "" {
-		localized := fmt.Sprintf("demoit-%s.html", *flags.Locale)
-		if _, err := os.Stat(filepath.Join(folder, localized)); err == nil {
-			htmlPageName = localized
-		}
+	locale := ""
+	if flags.Locale != nil {
+		locale = *flags.Locale
 	}
 
-	content, err := os.ReadFile(filepath.Join(folder, htmlPageName))
+	rendered, err := deck.Load(folder, locale)
 	if err != nil {
 		return nil, err
 	}
 
-	parts := bytes.Split(content, []byte("---"))
-	for i, part := range parts {
-		var url string
-		if i == 0 {
-			url = "/"
-		} else {
+	steps := make([]Page, 0, len(rendered))
+	for i, html := range rendered {
+		url := "/"
+		if i > 0 {
 			url = fmt.Sprintf("/%d", i)
 		}
 
 		steps = append(steps, Page{
 			WorkingDir:  folder,
-			HTML:        template.HTML(part),
+			HTML:        html,
 			DevMode:     *flags.DevMode,
 			CurrentStep: i,
 			URL:         url,
