@@ -1,0 +1,162 @@
+package deck_test
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/dgageot/demoit/deck"
+)
+
+// writeDeck writes files into a fresh presentation folder and returns it.
+func writeDeck(t *testing.T, files map[string]string) string {
+	t.Helper()
+
+	folder := t.TempDir()
+	for name, content := range files {
+		path := filepath.Join(folder, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("unable to create %s: %v", filepath.Dir(path), err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatalf("unable to write %s: %v", name, err)
+		}
+	}
+
+	return folder
+}
+
+func TestLoadRendersAMarkdownDeck(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		".demoit/talk.yml": "logos: [/images/a.svg]\n",
+		"demoit.md":        "---\nlayout: cover\n---\n# Impact Framework\n\n---\ntitle: Les chiffres\nsource: https://arcep.fr\n---\n**2,5%** des émissions.\n\n:::speakernotes\nADEME\n:::\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if len(slides) != 2 {
+		t.Fatalf("got %d slides, want 2", len(slides))
+	}
+	if want := "<h1>Impact Framework</h1>"; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want it to contain %q", slides[0], want)
+	}
+	if want := `src="/images/a.svg"`; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want the cover to show the talk's logo", slides[0])
+	}
+	for _, want := range []string{
+		`<h2 class="max center-left">Les chiffres</h2>`,
+		"<strong>2,5%</strong>",
+		"Source: https://arcep.fr",
+		"<speaker-notes>",
+	} {
+		if !strings.Contains(string(slides[1]), want) {
+			t.Errorf("got %q, want it to contain %q", slides[1], want)
+		}
+	}
+}
+
+func TestLoadPrefersMarkdownOverHTML(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.md":   "# markdown\n",
+		"demoit.html": "<h1>html</h1>\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if !strings.Contains(string(slides[0]), "<h1>markdown</h1>") {
+		t.Fatalf("got %q, want the Markdown deck to win", slides[0])
+	}
+}
+
+func TestLoadPrefersTheLocalizedDeck(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.md":    "# français\n",
+		"demoit-en.md": "# english\n",
+	})
+
+	slides, err := deck.Load(folder, "en")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if !strings.Contains(string(slides[0]), "english") {
+		t.Fatalf("got %q, want the English deck", slides[0])
+	}
+}
+
+func TestLoadFallsBackToTheLocalizedHTMLDeck(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.md":      "# français\n",
+		"demoit-en.html": "<h1>english</h1>\n",
+	})
+
+	slides, err := deck.Load(folder, "en")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if !strings.Contains(string(slides[0]), "<h1>english</h1>") {
+		t.Fatalf("got %q, want the localized HTML deck to win over the default Markdown one", slides[0])
+	}
+}
+
+func TestLoadKeepsHTMLDecksUntouched(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.html": "<main>un</main>\n---\n<main>deux</main>\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if len(slides) != 2 {
+		t.Fatalf("got %d slides, want 2", len(slides))
+	}
+	if got, want := string(slides[0]), "<main>un</main>\n"; got != want {
+		t.Fatalf("got %q, want %q — an HTML deck must pass through unchanged", got, want)
+	}
+}
+
+func TestLoadReportsAMissingDeck(t *testing.T) {
+	t.Parallel()
+
+	if _, err := deck.Load(t.TempDir(), ""); err == nil {
+		t.Fatal("got no error, want one for a folder with no deck file")
+	}
+}
+
+func TestLoadExposesUnknownFrontmatterKeys(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		".demoit/layouts/mine.html": `<p>{{ .Meta.badge }}</p>`,
+		"demoit.md":                 "---\nlayout: mine\nbadge: nouveau\n---\n# Titre\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if want := "<p>nouveau</p>"; !strings.Contains(string(slides[0]), want) {
+		t.Fatalf("got %q, want it to contain %q", slides[0], want)
+	}
+}

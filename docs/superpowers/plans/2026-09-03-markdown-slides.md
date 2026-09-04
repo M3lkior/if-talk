@@ -304,7 +304,7 @@ In `handlers/code.go`, delete `nonDefaultYAMLLexer` (lines 70-100), `lexer` (105
 	style := highlight.Style(r.FormValue("style"))
 ```
 
-Fix the import block: drop `github.com/alecthomas/chroma/v2`, `github.com/alecthomas/chroma/v2/lexers` and `github.com/alecthomas/chroma/v2/styles`, keep `github.com/alecthomas/chroma/v2/formatters/html`, and add `github.com/dgageot/demoit/highlight`. `strings` is still used by `Code`; `fmt` and `strconv` are still used too.
+Fix the import block: drop `github.com/alecthomas/chroma/v2`, `github.com/alecthomas/chroma/v2/lexers` and `github.com/alecthomas/chroma/v2/styles`, keep `github.com/alecthomas/chroma/v2/formatters/html`, and add `github.com/dgageot/demoit/highlight`. `strings` and `strconv` are still used by `Code`. **`fmt` becomes unused and must go** — its only use was the `Println` inside the `lexer` function you are deleting; `Code` builds its error strings with concatenation. Run the build after the edit, not just the package test, so an import mistake surfaces.
 
 - [ ] **Step 6: Verify the whole build and the format**
 
@@ -478,6 +478,43 @@ func TestSplitAcceptsLongerSeparators(t *testing.T) {
 		t.Fatalf("got %d slides, want 2", len(slides))
 	}
 }
+
+func TestSplitIgnoresSeparatorsInsideATildeFence(t *testing.T) {
+	t.Parallel()
+
+	src := []byte("# Un\n\n~~~\nfoo\n---\nbar\n~~~\n\n---\n# Deux\n")
+
+	slides := deck.Split(src)
+
+	if len(slides) != 2 {
+		t.Fatalf("got %d slides, want 2 — a --- inside a ~~~ fence must not cut", len(slides))
+	}
+}
+
+// A deck whose first line is --- but whose frontmatter never closes must not
+// gain a phantom empty first slide: the leading --- is consumed either way,
+// because handing it back to the body scan makes it cut a slide of its own and
+// shifts every following slide number by one.
+func TestSplitHandlesUnterminatedFrontmatterAtFileStart(t *testing.T) {
+	t.Parallel()
+
+	src := []byte("---\nlayout: split\n# reste\n")
+
+	slides := deck.Split(src)
+
+	if len(slides) != 1 {
+		t.Fatalf("got %d slides, want 1 — a leading --- must never produce an empty slide", len(slides))
+	}
+	if slides[0].Frontmatter != nil {
+		t.Errorf("got frontmatter %q, want none — the block never closes", slides[0].Frontmatter)
+	}
+	if got, want := string(slides[0].Body), "layout: split\n# reste\n"; got != want {
+		t.Errorf("got body %q, want %q", got, want)
+	}
+	if got, want := slides[0].BodyLine, 2; got != want {
+		t.Errorf("got body line %d, want %d", got, want)
+	}
+}
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -551,12 +588,19 @@ func readSlide(lines []string, start int, fileStart bool) (RawSlide, int, bool) 
 func readFrontmatter(lines []string, start int, fileStart bool) ([]byte, int) {
 	i := skipBlank(lines, start)
 
+	// At the start of the file a leading --- line opens the frontmatter. It is
+	// consumed whatever follows: when the block turns out not to be
+	// frontmatter, that line was a redundant leading separator, and handing it
+	// back to findSlideEnd would cut an empty slide in front of the deck and
+	// shift every slide number by one.
+	fallback := start
 	if fileStart && i < len(lines) && isSlideSeparator(lines[i]) {
+		fallback = i + 1
 		i = skipBlank(lines, i+1)
 	}
 
 	if i >= len(lines) || !isFrontmatterStart(lines[i]) {
-		return nil, start
+		return nil, fallback
 	}
 
 	for j := i + 1; j < len(lines); j++ {
@@ -565,7 +609,7 @@ func readFrontmatter(lines []string, start int, fileStart bool) ([]byte, int) {
 		}
 	}
 
-	return nil, start
+	return nil, fallback
 }
 
 // skipBlank returns the index of the first non-blank line at or after start.
@@ -612,13 +656,15 @@ func findSlideEnd(lines []string, start int) (int, bool) {
 	for i := start; i < len(lines); i++ {
 		line := strings.TrimRight(lines[i], "\r\n")
 
+		open := fenceOpen(line)
+
 		switch {
 		case fence != "":
 			if isFenceClose(line, fence) {
 				fence = ""
 			}
-		case fenceOpen(line) != "":
-			fence = fenceOpen(line)
+		case open != "":
+			fence = open
 		case isSlideSeparator(line):
 			return i, true
 		}
@@ -691,7 +737,7 @@ func isSlideSeparator(line string) bool {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `go test ./deck/ -v -run TestSplit`
-Expected: PASS, 7 tests
+Expected: PASS, 9 tests
 
 - [ ] **Step 5: Verify the format**
 
@@ -1053,6 +1099,68 @@ func TestTwoColonsIsNotADirectiveWithoutAName(t *testing.T) {
 		t.Fatalf("got %q, want it to contain %q — colons in prose stay prose", got, want)
 	}
 }
+
+// The parser is registered under the ':' trigger, so the test above never
+// reaches Open. This one does, and it is what exercises the empty-name guard.
+func TestAFenceWithoutANameIsNotADirective(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, ":::\ncontenu\n:::\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if !strings.Contains(got, "contenu") {
+		t.Fatalf("got %q, want the content kept — a fence with no name is not a directive", got)
+	}
+}
+
+// contentIndent is a column width and Advance moves bytes, so without a clamp
+// to the line's own whitespace a less-indented continuation line loses
+// characters off its front.
+func TestOutdentedContinuationLineKeepsItsText(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, ":::speakernotes\n  première ligne\ndeuxième ligne\n:::\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if !strings.Contains(got, "deuxième ligne") {
+		t.Fatalf("got %q, want the outdented line kept whole", got)
+	}
+}
+
+// A tab is one byte but four columns wide, so the same missing clamp ate four
+// bytes off a tab-indented line and destroyed the directive on it.
+func TestTabIndentedDirectiveSurvives(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, ":::window{title=Demo}\n\t::term{path=sources}\n:::\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if want := `<web-term path="sources">`; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want it to contain %q", got, want)
+	}
+}
+
+func TestAttributeValuesAreHTMLEscaped(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, ":::window{title=\"Démo <b>&</b>\"}\ncontenu\n:::\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if strings.Contains(got, "<b>") {
+		t.Fatalf("got %q, want < and & escaped inside the attribute value", got)
+	}
+	if !strings.Contains(got, "&lt;b&gt;") {
+		t.Fatalf("got %q, want the value escaped as &lt;b&gt;", got)
+	}
+}
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -1147,6 +1255,10 @@ func (e Error) Error() string {
 }
 
 // Errors returns the directive errors collected while parsing with ctx.
+//
+// One context belongs to one document: errors accumulate in it, so reusing a
+// context across two Convert calls reports the first document's problems again
+// on the second.
 func Errors(ctx parser.Context) []Error {
 	collected, ok := ctx.Get(errorsKey).([]Error)
 	if !ok {
@@ -1277,7 +1389,15 @@ func (b *blockParser) Continue(node ast.Node, reader text.Reader, pc parser.Cont
 		return parser.Close
 	}
 
+	// contentIndent is a column width, so a tab counts as four, but Advance
+	// moves bytes. Clamp it to pos, the byte index of the line's first
+	// non-space character: stripping stops at the content, never inside it.
+	// Without the clamp an outdented continuation line loses characters and a
+	// tab-indented directive is eaten into literal text, both silently.
 	if indent := stack[depth].contentIndent; indent > 0 {
+		if indent > pos {
+			indent = pos
+		}
 		if limit := segment.Stop - segment.Start - 1; indent > limit {
 			indent = limit
 		}
@@ -1316,13 +1436,27 @@ func (b *blockParser) CanAcceptIndentedLine() bool {
 }
 
 // readAttributes reads the `{key=value}` block a directive may carry.
+//
+// The block is parsed on a reader scoped to the rest of the current line.
+// goldmark's ParseAttributes skips spaces before it looks for a brace, and it
+// counts '\n' as a space, so on a directive with no braces it walks into the
+// following line; its SetPosition restore then puts the offset back but leaves
+// the reader's line head and peeked line on the line after, which corrupts
+// every later offset and panics with a slice bounds error. A scoped reader
+// keeps that damage off the reader the parser actually uses.
 func readAttributes(reader text.Reader) map[string]string {
 	attrs := map[string]string{}
 
-	parsed, ok := parser.ParseAttributes(reader)
+	line, _ := reader.PeekLine()
+
+	scoped := text.NewReader(line)
+	parsed, ok := parser.ParseAttributes(scoped)
 	if !ok {
 		return attrs
 	}
+
+	_, consumed := scoped.Position()
+	reader.Advance(consumed.Start)
 
 	for _, attr := range parsed {
 		attrs[string(attr.Name)] = attributeValue(attr.Value)
@@ -1412,6 +1546,7 @@ package directive
 
 import (
 	"fmt"
+	"html"
 
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/renderer"
@@ -1480,14 +1615,16 @@ func (r *nodeRenderer) render(w util.BufWriter, _ []byte, node ast.Node, enterin
 	return ast.WalkContinue, nil
 }
 
-// copyAttributes copies the named attributes through unchanged, in order,
-// skipping the ones that are absent or empty.
+// copyAttributes copies the named attributes through, in order, skipping the
+// ones that are absent or empty. Values are HTML-escaped: %q would quote them
+// the Go way, which leaves a " in a value free to end the attribute and turn
+// whatever follows into markup of its own.
 func copyAttributes(keys ...string) func(map[string]string) (string, error) {
 	return func(attrs map[string]string) (string, error) {
 		rendered := ""
 		for _, key := range keys {
 			if value := attrs[key]; value != "" {
-				rendered += fmt.Sprintf(" %s=%q", key, value)
+				rendered += fmt.Sprintf(` %s="%s"`, key, html.EscapeString(value))
 			}
 		}
 
@@ -1498,7 +1635,7 @@ func copyAttributes(keys ...string) func(map[string]string) (string, error) {
 // splitAttributes renders the class of a <split-view>, built from its height.
 func splitAttributes(attrs map[string]string) (string, error) {
 	if height := attrs["height"]; height != "" {
-		return fmt.Sprintf(" class=%q", height+"-height"), nil
+		return fmt.Sprintf(` class="%s"`, html.EscapeString(height+"-height")), nil
 	}
 
 	return "", nil
@@ -1554,7 +1691,7 @@ Expected: the vendored tree lists its files, `go 1.19`, and a toolchain count of
 - [ ] **Step 9: Run the tests to verify they pass**
 
 Run: `go test ./deck/directive/ -v`
-Expected: PASS, 7 tests
+Expected: PASS, 11 tests
 
 If `TestIndentedContainerContentIsNotACodeBlock` fails, the `reader.Advance` arithmetic in `Continue` is the suspect: compare it against `goldmark-fences@v1.0.0/parser.go:186-193`, which is the working reference for content-indent stripping. That module is not a dependency of this repo — read it in the module cache at `$(go env GOMODCACHE)/github.com/stefanfritsch/goldmark-fences@v1.0.0/parser.go`, and do not add it to `go.mod`.
 
@@ -1692,6 +1829,7 @@ package directive
 import (
 	"errors"
 	"fmt"
+	"html"
 	"strings"
 )
 
@@ -1721,8 +1859,12 @@ func codeAttributes(attrs map[string]string) (string, error) {
 		style = "vs"
 	}
 
-	return fmt.Sprintf(" folder=%q files=%q start-lines=%q end-lines=%q code_style=%q",
-		folder, strings.Join(files, " "), starts, ends, style), nil
+	return fmt.Sprintf(` folder="%s" files="%s" start-lines="%s" end-lines="%s" code_style="%s"`,
+		html.EscapeString(folder),
+		html.EscapeString(strings.Join(files, " ")),
+		html.EscapeString(starts),
+		html.EscapeString(ends),
+		html.EscapeString(style)), nil
 }
 
 // lineRanges turns "11-20,4-9" into the "11;4" and "20;9" that <source-code>
@@ -1846,12 +1988,259 @@ In `deck/directive/directive_test.go`, change `render` so the extension and `Con
 	}
 ```
 
-- [ ] **Step 7: Run every directive test to verify they pass**
+- [ ] **Step 7: Replace goldmark's attribute parser**
+
+**This step exists because goldmark's `parser.ParseAttributes` cannot read the values this catalogue needs.** Its unquoted-value scanner (`vendor/github.com/yuin/goldmark/parser/attribute.go:301`, `parseAttributeOthers`) accepts only `[A-Za-z0-9_:.-]`, and anything starting with a digit goes to `parseAttributeNumber` instead. A value it cannot finish makes the **whole** `{…}` block fail, which silently strips every attribute from the directive:
+
+| Value the catalogue needs | What goldmark does with it |
+|---|---|
+| `path=sandbox` | parses |
+| `src=https://if.greensoftware.foundation/users/quick-start` | stops at the first `/` |
+| `lines=11-20` | reads `11`, then chokes on `-` |
+| `files=a.yml,b.yml` | stops at the comma |
+| `cols=4,8` (task 7) | stops at the comma |
+
+So four of the six directives are broken, including `::browser` with any real URL — which no task 5 test happened to cover.
+
+Replace it with the grammar the directives actually need. In `deck/directive/parser.go`, `readAttributes` becomes:
+
+```go
+// readAttributes reads the `{key=value}` block a directive may carry, and
+// reports whether the block was malformed — an unclosed brace, a key with no
+// value, an unterminated quote — as opposed to simply absent. A malformed
+// block must be reported: silently dropping it renders a component stripped of
+// its attributes, which is a broken demo with no diagnostic.
+//
+// goldmark's own parser.ParseAttributes is deliberately not used. It accepts
+// only [A-Za-z0-9_:.-] in an unquoted value and sends anything starting with a
+// digit to its number parser, so a URL stops at the first slash, `11-20` stops
+// after `11`, and `a.yml,b.yml` stops at the comma — and a value it cannot
+// finish makes the whole block fail, stripping every attribute. The grammar
+// here is the one the directives need and nothing more: an unquoted value runs
+// to the next space or closing brace, and a value that must hold spaces or a
+// brace is double-quoted.
+func readAttributes(reader text.Reader) (map[string]string, bool) {
+	attrs := map[string]string{}
+
+	line, _ := reader.PeekLine()
+
+	start := leadingSpaces(line)
+	if start >= len(line) || line[start] != '{' {
+		return attrs, false
+	}
+
+	end, ok := scanAttributes(line[start+1:], attrs)
+	if !ok {
+		// Discard whatever pairs were scanned before the failure. Keeping them
+		// renders a component with partial, accidentally-plausible attributes
+		// next to the error, which is worse than rendering none.
+		return map[string]string{}, true
+	}
+
+	reader.Advance(start + 1 + end)
+
+	return attrs, false
+}
+
+// scanAttributes reads `key=value` pairs up to the closing brace and returns
+// the index just past that brace.
+func scanAttributes(body []byte, attrs map[string]string) (int, bool) {
+	for i := 0; i < len(body); {
+		i += leadingSpaces(body[i:])
+		if i >= len(body) {
+			break
+		}
+		if body[i] == '}' {
+			return i + 1, true
+		}
+
+		key, next, ok := scanAttributeKey(body, i)
+		if !ok {
+			return 0, false
+		}
+
+		value, next, ok := scanAttributeValue(body, next)
+		if !ok {
+			return 0, false
+		}
+
+		attrs[key] = value
+		i = next
+	}
+
+	return 0, false
+}
+
+// scanAttributeKey reads a key starting at i and returns it with the index
+// just past the `=` that must follow it.
+func scanAttributeKey(body []byte, i int) (string, int, bool) {
+	end := i
+	for end < len(body) && isNameByte(body[end]) {
+		end++
+	}
+	if end == i || end >= len(body) || body[end] != '=' {
+		return "", 0, false
+	}
+
+	return string(body[i:end]), end + 1, true
+}
+
+// scanAttributeValue reads one value starting at i and returns it with the
+// index just past it. A double-quoted value may hold spaces and braces; a bare
+// one runs to the next space or closing brace.
+func scanAttributeValue(body []byte, i int) (string, int, bool) {
+	if i < len(body) && body[i] == '"' {
+		end := bytes.IndexByte(body[i+1:], '"')
+		if end < 0 {
+			return "", 0, false
+		}
+
+		return string(body[i+1 : i+1+end]), i + end + 2, true
+	}
+
+	end := i
+	for end < len(body) && isValueByte(body[end]) {
+		end++
+	}
+	if end == i {
+		return "", 0, false
+	}
+
+	return string(body[i:end]), end, true
+}
+
+// isValueByte reports whether c may appear in an unquoted attribute value. The
+// newline is excluded so that a block whose brace never closes cannot swallow
+// the end of the line into a value.
+func isValueByte(c byte) bool {
+	return c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '}'
+}
+
+// leadingSpaces returns the number of leading spaces and tabs of b.
+func leadingSpaces(b []byte) int {
+	i := 0
+	for i < len(b) && (b[i] == ' ' || b[i] == '\t') {
+		i++
+	}
+
+	return i
+}
+```
+
+Three consequences to carry out in the same commit:
+
+- **`attributeValue` is now dead** — it existed only to turn goldmark's `interface{}` attribute values into strings. Delete it.
+- **`parser.go`'s imports change**: add `"bytes"`, and remove `"fmt"` and `"strings"`, which `attributeValue` was their only user. `parser` itself stays — it is still needed for `parser.Context`, `parser.BlockParser` and the state constants.
+- **`#id` and `.class` shorthands are gone.** Nothing in the catalogue or in `impact-framework/demoit.html` uses them, and any slide that wants a bare class can drop to raw HTML. The spec records this.
+
+Then record the malformed case in `Open`:
+
+```go
+	attrs, malformed := readAttributes(reader)
+
+	node := NewNode(name, attrs, fenceLength, lineNumber+1)
+	if malformed {
+		addError(pc, node.Line, "the %s directive has an attribute block that does not parse: check the braces", name)
+	}
+
+	if !node.Container {
+		return node, parser.NoChildren
+	}
+```
+
+Add the test to `deck/directive/code_test.go`:
+
+```go
+func TestMalformedAttributeBlockIsReported(t *testing.T) {
+	t.Parallel()
+
+	_, errs := render(t, "::term{path=sources\n")
+
+	if len(errs) != 1 {
+		t.Fatalf("got %d errors, want 1 — an unclosed brace must not pass silently", len(errs))
+	}
+	if !strings.Contains(errs[0].Message, "term") {
+		t.Errorf("got message %q, want it to name the directive", errs[0].Message)
+	}
+}
+
+func TestADirectiveWithoutAttributesIsNotReported(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, "::term\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none — no braces at all is legitimate", errs)
+	}
+	if want := "<web-term></web-term>"; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want it to contain %q", got, want)
+	}
+}
+
+// A URL is the value goldmark's own attribute parser could not read: it stops
+// at the first slash. Five of the deck's slides carry one.
+func TestUnquotedURLValueSurvives(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, "::browser{src=https://if.greensoftware.foundation/users/quick-start}\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if want := `<web-browser src="https://if.greensoftware.foundation/users/quick-start">`; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want it to contain %q", got, want)
+	}
+}
+
+func TestUnterminatedQuoteIsReported(t *testing.T) {
+	t.Parallel()
+
+	_, errs := render(t, "::term{path=\"sans fin}\n")
+
+	if len(errs) != 1 {
+		t.Fatalf("got %d errors, want 1 — an unterminated quote must not pass silently", len(errs))
+	}
+}
+
+// A malformed block must render no attributes at all. Keeping the pairs read
+// before the failure produced `<web-term path="sources&#10;">` next to the
+// error: a component that looks configured and is not.
+func TestMalformedAttributeBlockRendersNoAttributes(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, "::term{path=sources\n")
+
+	if len(errs) != 1 {
+		t.Fatalf("got %d errors, want 1", len(errs))
+	}
+	if want := "<web-term></web-term>"; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want it to contain %q", got, want)
+	}
+}
+
+func TestCodeDirectiveEscapesItsAttributes(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, "::code{folder=sources files=\"a&b.yml\"}\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if strings.Contains(got, "a&b.yml") {
+		t.Fatalf("got %q, want the ampersand escaped", got)
+	}
+	if !strings.Contains(got, "a&amp;b.yml") {
+		t.Fatalf("got %q, want it to contain a&amp;b.yml", got)
+	}
+}
+```
+
+- [ ] **Step 8: Run every directive test to verify they pass**
 
 Run: `go test ./deck/directive/ -v`
-Expected: PASS, 12 tests
+Expected: PASS, 22 tests
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add deck/directive
@@ -1907,6 +2296,19 @@ func TestSplitWithColsRendersAWeightedGrid(t *testing.T) {
 	}
 	if strings.Contains(got, "<split-view") {
 		t.Errorf("got %q, want a weighted grid rather than a split-view", got)
+	}
+
+	// Order matters and substring presence does not prove it. ReplaceChild
+	// rewires the sibling links, so collecting the children in the wrong order
+	// silently swaps the panes: the terminal would get the wide column and
+	// VS Code the narrow one, with every assertion above still passing.
+	s4 := strings.Index(got, `<div class="s4">`)
+	s8 := strings.Index(got, `<div class="s8">`)
+	term := strings.Index(got, "<web-term")
+	code := strings.Index(got, "<vs-code")
+
+	if s4 > term || term > s8 || s8 > code {
+		t.Errorf("got %q, want the s4 column then the term then the s8 column then vs-code", got)
 	}
 }
 
@@ -2063,7 +2465,7 @@ In `deck/directive/extension.go`, add the transformer to the parser options:
 - [ ] **Step 6: Run every directive test to verify they pass**
 
 Run: `go test ./deck/directive/ -v`
-Expected: PASS, 15 tests
+Expected: PASS, 25 tests
 
 If `TestSplitWithColsRendersAWeightedGrid` reports the children in the wrong order or drops one, the `ReplaceChild` loop is the suspect: collect the children into the slice **before** mutating the tree, which the code above does, and never iterate `NextSibling` while replacing.
 
@@ -2420,6 +2822,48 @@ func TestLayoutsRejectAnUnknownName(t *testing.T) {
 		t.Fatalf("got error %v, want it to name the unknown layout", err)
 	}
 }
+
+// A layout name comes from a slide's frontmatter and is joined into a file
+// path, so it must not be able to walk out of the layouts folder and have an
+// arbitrary file parsed as a template and rendered into the slide.
+//
+// The traversal target has to be a file that actually exists, otherwise the
+// test passes with or without the guard: a name that resolves to nothing falls
+// through to the embedded lookup and fails there as an unknown layout, which
+// is an error too. So the test plants a file outside the talk folder and
+// checks it stays unreachable.
+func TestLayoutsRejectAPathInTheName(t *testing.T) {
+	t.Parallel()
+
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, "secret.html"), []byte("<p>fuite</p>"), 0o600); err != nil {
+		t.Fatalf("unable to write the file to protect: %v", err)
+	}
+
+	folder := t.TempDir()
+	escape, err := filepath.Rel(
+		filepath.Join(folder, ".demoit", "layouts"),
+		filepath.Join(outside, "secret"),
+	)
+	if err != nil {
+		t.Fatalf("unable to build the traversal path: %v", err)
+	}
+
+	for _, name := range []string{escape, "foo/bar", `foo\bar`, ".."} {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := deck.NewLayouts(folder).Execute(name, deck.Slide{})
+			if err == nil {
+				t.Fatalf("got %q with no error for the layout name %q, want an error", got, name)
+			}
+			if strings.Contains(string(got), "fuite") {
+				t.Fatalf("got %q, want the file outside the talk folder to stay unreachable", got)
+			}
+		})
+	}
+}
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -2501,6 +2945,7 @@ Create `deck/layouts/cover.html`:
 ```html
 <main class="responsive max center-align {{ .Class }}">
 {{ .Content }}
+<div class="large-space"></div>
 <div class="large-space"></div>
 <div class="grid center-align">
     {{ range .Talk.Logos }}<div class="s12 m6 l6">
@@ -2613,6 +3058,10 @@ func (l *Layouts) Execute(name string, slide Slide) (template.HTML, error) {
 
 // read returns the source of a layout, preferring the presentation's own copy.
 func (l *Layouts) read(name string) ([]byte, error) {
+	if !isLayoutName(name) {
+		return nil, fmt.Errorf("invalid layout name %q: a layout name is a bare word, with no path separator", name)
+	}
+
 	own, err := os.ReadFile(filepath.Join(l.folder, ".demoit", "layouts", name+".html"))
 	if err == nil {
 		return own, nil
@@ -2632,12 +3081,28 @@ func (l *Layouts) read(name string) ([]byte, error) {
 
 	return embedded, err
 }
+
+// isLayoutName reports whether name is a bare layout name. The name arrives
+// from a slide's frontmatter and is joined into a file path, so it must not be
+// able to walk out of the layouts folder: without this, a deck could name
+// `../../../../etc/passwd` as its layout and have the file parsed as a
+// template and rendered into a slide. Custom layout names are unaffected —
+// they are bare words like `demo-3-panneaux`.
+func isLayoutName(name string) bool {
+	if name == "" {
+		return false
+	}
+
+	return !strings.ContainsAny(name, `/\`) && !strings.Contains(name, "..")
+}
 ```
+
+Add `"strings"` to `layout.go`'s standard-library import group.
 
 - [ ] **Step 6: Run the test to verify it passes**
 
 Run: `go test ./deck/ -v -run Layout`
-Expected: PASS — including the six subtests of `TestEveryEmbeddedLayoutIsOverridable`
+Expected: PASS — 7 top-level tests, one with 6 subtests and one with 4
 
 `TestEveryEmbeddedLayoutIsOverridable` is the test that enforces the spec's hard constraint: no embedded layout may be locked in the binary.
 
@@ -3020,9 +3485,9 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 		slide.Height = defaultHeight
 	}
 
-	body, notes, err := renderMarkdown(raw, known.Speakernotes)
+	body, notes, line, err := renderMarkdown(raw, known.Speakernotes)
 	if err != nil {
-		return errorHTML(file, raw.BodyLine, err)
+		return errorHTML(file, line, err)
 	}
 	slide.Content = body
 	slide.Notes = notes
@@ -3036,27 +3501,33 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 }
 
 // renderMarkdown converts a slide's body and its speakernotes frontmatter key.
-func renderMarkdown(raw RawSlide, notes string) (template.HTML, template.HTML, error) {
-	body, err := convert(raw.Body, raw.BodyLine)
+// It returns the deck-file line to report a failure on, so that the error block
+// carries exactly one line number.
+func renderMarkdown(raw RawSlide, notes string) (template.HTML, template.HTML, int, error) {
+	body, line, err := convert(raw.Body, raw.BodyLine)
 	if err != nil {
-		return "", "", err
+		return "", "", line, err
 	}
 
 	if strings.TrimSpace(notes) == "" {
-		return body, "", nil
+		return body, "", 0, nil
 	}
 
-	rendered, err := convert([]byte(notes), raw.StartLine)
+	// The speakernotes value sits inside the frontmatter block, so a line
+	// counted from its own text points nowhere the author can use. Report the
+	// slide's first line and name the key instead.
+	rendered, _, err := convert([]byte(notes), raw.StartLine)
 	if err != nil {
-		return "", "", err
+		return "", "", raw.StartLine, fmt.Errorf("in the speakernotes frontmatter key: %w", err)
 	}
 
-	return body, rendered, nil
+	return body, rendered, 0, nil
 }
 
-// convert renders Markdown to HTML, reporting the first directive problem with
-// the line it sits on in the deck file.
-func convert(source []byte, firstLine int) (template.HTML, error) {
+// convert renders Markdown to HTML. It returns the first directive problem
+// with the line it sits on in the deck file, so that the caller reports one
+// number rather than embedding a second one in the message.
+func convert(source []byte, firstLine int) (template.HTML, int, error) {
 	ctx := parser.NewContext()
 
 	md := goldmark.New(
@@ -3069,14 +3540,14 @@ func convert(source []byte, firstLine int) (template.HTML, error) {
 
 	var out bytes.Buffer
 	if err := md.Convert(source, &out, parser.WithContext(ctx)); err != nil {
-		return "", err
+		return "", firstLine, err
 	}
 
 	if problems := directive.Errors(ctx); len(problems) > 0 {
-		return "", fmt.Errorf("line %d: %s", firstLine+problems[0].Line-1, problems[0].Message)
+		return "", firstLine + problems[0].Line - 1, errors.New(problems[0].Message)
 	}
 
-	return template.HTML(out.String()), nil
+	return template.HTML(out.String()), 0, nil
 }
 
 // errorHTML renders a slide-level error so that a mistake costs one slide
@@ -3166,6 +3637,9 @@ func TestABrokenSlideDoesNotBreakTheDeck(t *testing.T) {
 	if !strings.Contains(string(slides[1]), "demoit.md:4") {
 		t.Errorf("got %q, want the error to point at demoit.md line 4, the slide's first line", slides[1])
 	}
+	if strings.Contains(string(slides[1]), "<h1>Deux</h1>") {
+		t.Errorf("got %q, want the error block to replace the slide's body, not sit beside it", slides[1])
+	}
 }
 
 func TestAnUnclosedDirectiveIsReportedOnItsOwnSlide(t *testing.T) {
@@ -3182,6 +3656,9 @@ func TestAnUnclosedDirectiveIsReportedOnItsOwnSlide(t *testing.T) {
 
 	if len(slides) != 2 {
 		t.Fatalf("got %d slides, want 2", len(slides))
+	}
+	if !strings.Contains(string(slides[0]), "<h1>Un</h1>") {
+		t.Errorf("got %q, want the first slide untouched by the second's failure", slides[0])
 	}
 	if !strings.Contains(string(slides[1]), "never closed") {
 		t.Errorf("got %q, want it to report the unclosed directive", slides[1])
@@ -3208,6 +3685,12 @@ func TestInvalidFrontmatterIsReportedOnItsOwnSlide(t *testing.T) {
 	}
 	if !strings.Contains(string(slides[0]), "demoit.md:1") {
 		t.Errorf("got %q, want the error to point at demoit.md line 1", slides[0])
+	}
+	// A line number alone is not an actionable error: the block must also carry
+	// what went wrong. Without this, a scrambled or generic message still
+	// passes. "yaml:" is the prefix yaml.v3 puts on its own errors.
+	if !strings.Contains(string(slides[0]), "yaml:") {
+		t.Errorf("got %q, want the block to say what the YAML problem was, not just where", slides[0])
 	}
 }
 ```
@@ -3685,6 +4168,6 @@ Two spec items are deliberately not their own task: `gofmt`/`go vet`/`go test` r
 
 **Type consistency.** `deck.Slide` is defined once, in Task 9, and Tasks 10 and 13 use exactly those field names. `directive.Node` is defined in Task 5 and mutated by name in Task 7 (`Name`, `Attrs`). `specs` gains entries in Tasks 6 (`code`) and 7 (`grid`, `col`) with the `spec` shape declared in Task 5. `directive.Extension` gains its `Context` field in Task 6, and Task 6 Step 6 updates the Task 5 test helper accordingly — the only backwards edit in the plan, and it is called out where it happens. `highlight.Write` is declared in Task 2 and consumed in Task 8 with the same signature.
 
-**Known risk.** The `reader.Advance` arithmetic in `blockParser.Continue` (Task 5) is the one piece copied in spirit rather than verbatim from a working implementation. Task 5 Step 8 names `goldmark-fences@v1.0.0/parser.go:186-193` as the reference to compare against if the indented-content test fails.
+**Known risk — resolved during execution, and it was not where it was expected.** The `reader.Advance` arithmetic in `blockParser.Continue` was flagged as this plan's one transposed-rather-than-copied piece. It turned out correct as written, and the indent-stripping test passed first try. The real defect was next door in `readAttributes`: calling `parser.ParseAttributes` on the parser's own reader panics with a slice bounds error, because goldmark counts `'\n'` as a space, so its leading `SkipSpaces` walks into the following line on a brace-less directive, and its `SetPosition` restore leaves the reader's line head and peeked line stale. The fix, now in Task 5's code above, parses attributes on a `text.NewReader(line)` scoped to the current line and then advances the real reader by what that scoped reader consumed.
 
 **Amended before execution.** A pre-flight scan of this plan found six defects, all fixed above and recorded with their reasoning in `.superpowers/sdd/2026-09-03-markdown-slides/progress.md`. The blocking one: the original splitter could not see the frontmatter of any slide but the first, because the `---` opening it had already been eaten as the previous slide's separator — it would have failed two of the plan's own tests. The separator now doubles as the frontmatter's opening fence, recognised by a lowercase `key:` first line rather than by probing YAML. The spec's "Frontmatter par slide" section carries the same rule.

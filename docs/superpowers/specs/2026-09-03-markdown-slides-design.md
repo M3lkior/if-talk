@@ -154,7 +154,23 @@ Une slide sans frontmatter est du contenu pur.
 
 ### Catalogue des directives
 
-Conteneur `:::nom{attrs}` … `:::`, feuille `::nom{attrs}`. Le `{...}` est parsé par `parser.ParseAttributes` de goldmark : `#id`, `.classe`, `clé=valeur`, valeurs entre guillemets.
+Conteneur `:::nom{attrs}` … `:::`, feuille `::nom{attrs}`.
+
+**Grammaire des attributs : `clé=valeur`, séparés par des espaces.** Une valeur non quotée court jusqu'au prochain espace ou à l'accolade fermante ; une valeur qui doit contenir un espace ou une accolade se met entre guillemets doubles. Un bloc malformé — accolade non fermée, clé sans valeur, guillemet non terminé — est une erreur localisée, jamais un abandon silencieux.
+
+Motif du parseur maison, découvert à l'exécution : `parser.ParseAttributes` de goldmark **ne sait pas lire les valeurs dont ce catalogue a besoin**. Son scanner de valeur non quotée (`parser/attribute.go:301`) n'accepte que `[A-Za-z0-9_:.-]`, et tout ce qui commence par un chiffre part dans son parseur de nombres. Une valeur qu'il ne peut pas terminer fait échouer le bloc **entier**, ce qui dépouille la directive de tous ses attributs sans le dire :
+
+| Valeur nécessaire | Ce que goldmark en fait |
+|---|---|
+| `path=sandbox` | passe |
+| `src=https://if.greensoftware.foundation/users/quick-start` | s'arrête au premier `/` |
+| `lines=11-20` | lit `11`, bute sur `-` |
+| `files=a.yml,b.yml` | s'arrête à la virgule |
+| `cols=4,8` | s'arrête à la virgule |
+
+Quatre des six directives sont donc inutilisables avec ce parseur, dont `::browser` avec n'importe quelle URL réelle.
+
+Les raccourcis `#id` et `.classe` de goldmark disparaissent avec lui. Rien dans le catalogue ni dans les 18 slides d'`impact-framework` ne les utilise, et une slide qui veut une classe nue redescend en HTML brut.
 
 | Écriture Markdown | HTML émis |
 |---|---|

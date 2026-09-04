@@ -1,0 +1,20 @@
+{{ define "header" }}<header>
+    <nav>
+        <h2 class="max center-left">{{ .Title }}</h2>
+        <div class="grid center-right">
+            {{ range .Talk.Logos }}<div class="circle transparent s6">
+                <img class="responsive" src="{{ . }}">
+            </div>
+            {{ end }}
+        </div>
+    </nav>
+</header>
+{{ end }}
+
+{{ define "source" }}{{ with .Source }}<div class="center-align middle-align">
+    <span>Source: {{ . }}</span>
+</div>
+{{ end }}{{ end }}
+
+{{ define "notes" }}{{ with .Notes }}<speaker-notes>{{ . }}</speaker-notes>
+{{ end }}{{ end }}
