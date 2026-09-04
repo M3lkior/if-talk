@@ -18,16 +18,13 @@ limitations under the License.
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters/html"
-	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/dgageot/demoit/files"
+	"github.com/dgageot/demoit/highlight"
 )
 
 // Code returns the content of a source file.
@@ -47,8 +44,8 @@ func Code(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lexer := lexer(filename)
-	style := style(r.FormValue("style"))
+	lexer := highlight.ForFile(filename)
+	style := highlight.Style(r.FormValue("style"))
 	lines := highligtedLines(r)
 	formatter := html.New(html.Standalone(true), html.WithLineNumbers(true), html.HighlightLines(lines), html.WithClasses(true))
 
@@ -63,64 +60,6 @@ func Code(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to format source code", http.StatusInternalServerError)
 		return
 	}
-}
-
-type nonDefaultYAMLLexer struct {
-	chroma.Lexer
-}
-
-func (n *nonDefaultYAMLLexer) Tokenise(options *chroma.TokeniseOptions, text string) (chroma.Iterator, error) {
-	iterator, err := n.Lexer.Tokenise(nil, text)
-	if err != nil {
-		return nil, err
-	}
-
-	updated := iterator.Tokens()
-
-	for i, token := range updated {
-		if token.Type == chroma.Text {
-			if token.Value == "-" {
-				continue
-			}
-
-			if i+1 >= len(updated) {
-				continue
-			}
-
-			next := updated[i+1]
-			if next.Type == chroma.Punctuation && next.Value == ":" {
-				continue
-			}
-
-			token.Type = chroma.LiteralStringSingle
-			updated[i] = token
-		}
-	}
-
-	return chroma.Literator(updated...), nil
-}
-
-func lexer(file string) chroma.Lexer {
-	if lexer := lexers.Match(file); lexer != nil {
-		if strings.HasSuffix(file, ".yaml") || strings.HasSuffix(file, ".yml") {
-			fmt.Println("Using non default YAML Lexer")
-			return &nonDefaultYAMLLexer{lexers.Get(".yaml")}
-		}
-		return lexer
-	}
-
-	return lexers.Fallback
-}
-
-func style(name string) *chroma.Style {
-	if name != "" {
-		style := styles.Get(name)
-		if style != nil {
-			return style
-		}
-	}
-
-	return styles.GitHub
 }
 
 func highligtedLines(r *http.Request) [][2]int {
