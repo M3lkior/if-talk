@@ -47,7 +47,7 @@ const defaultHeight = "xlarge"
 // whatever classes it wants, the same way these six did before this map
 // existed.
 var defaultClasses = map[string]string{
-	"cover":   "responsive max center-align title",
+	"cover":   "responsive max center-align",
 	"default": "main responsive large-height center-align",
 	"quote":   "main responsive large-height center-align middle-align",
 	"split":   "responsive max",

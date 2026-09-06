@@ -1,5 +1,6 @@
 ---
 layout: cover
+class: responsive max center-align title
 ---
 
 <h1 class=" medium no-padding center-align top-align" style="color: white">A la découverte d'Impact Framework.</h1>
