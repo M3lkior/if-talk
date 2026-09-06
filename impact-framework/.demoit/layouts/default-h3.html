@@ -9,7 +9,13 @@
         </div>
     </nav>
 </header>
-<main class="{{ .Class }}">
+{{/* This is a talk-added layout, so it has no entry in deck.defaultClasses
+     and slide.Class arrives here empty when the slide names no class: key.
+     Hardcode the same fallback "default" itself uses so that case still
+     renders real classes instead of class="" — a slide that does declare a
+     class: key still gets it verbatim, replacing this fallback wholesale,
+     the same replace semantics every other layout follows. */}}
+<main class="{{ if .Class }}{{ .Class }}{{ else }}main responsive large-height center-align{{ end }}">
 {{ .Content }}
 </main>
 {{ template "source" . }}{{ template "notes" . }}

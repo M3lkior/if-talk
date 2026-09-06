@@ -190,10 +190,7 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 // renderTitle converts a slide's frontmatter title through the same Markdown
 // pipeline as its body, so an author can write **bold** or other inline
 // Markdown in a title, and an apostrophe is not HTML-entity-escaped the way
-// html/template would escape a plain string. A title is a single inline run
-// rather than a block, so the <p>...</p> that goldmark wraps a lone paragraph
-// in is stripped — the header partial already supplies the block element
-// (an <h2>, or a talk-specific layout's own heading tag).
+// html/template would escape a plain string.
 func renderTitle(title string, firstLine int) (template.HTML, int, error) {
 	if title == "" {
 		return "", 0, nil
@@ -204,9 +201,35 @@ func renderTitle(title string, firstLine int) (template.HTML, int, error) {
 		return "", line, err
 	}
 
-	inline := strings.TrimSuffix(strings.TrimPrefix(string(rendered), "<p>"), "</p>\n")
+	return template.HTML(singleParagraph(string(rendered))), 0, nil
+}
 
-	return template.HTML(inline), 0, nil
+// singleParagraph strips the <p>...</p> goldmark wraps a lone paragraph in,
+// so a title can be dropped straight into the <h2> (or another layout's own
+// heading tag) the header partial already supplies as the block element. A
+// title is meant to be one inline run, so the strip only fires when the
+// rendered title really is exactly one paragraph and nothing else: it must
+// open with "<p>", close with "</p>\n", and "<p>" must appear exactly once.
+// No slide in this deck writes a title that fails that check, but a future
+// one might write a two-paragraph title (blank line in the frontmatter
+// value), a heading ("# ..."), or a list ("- ..."), none of which goldmark
+// wraps in a single <p>. Stripping unconditionally would silently concatenate
+// two paragraphs into one run, or nest a block element inside the <h2> — a
+// malformed heading with nothing to explain it. Leaving the rendering whole
+// in that case still nests a block inside the <h2>, but visibly: the extra
+// tags show up in the page source and the DOM, which is a bug an author can
+// see and fix rather than one that only shows up as odd spacing on stage.
+func singleParagraph(rendered string) string {
+	const open, close = "<p>", "</p>\n"
+
+	if !strings.HasPrefix(rendered, open) || !strings.HasSuffix(rendered, close) {
+		return rendered
+	}
+	if strings.Count(rendered, open) != 1 {
+		return rendered
+	}
+
+	return strings.TrimSuffix(strings.TrimPrefix(rendered, open), close)
 }
 
 // renderMarkdown converts a slide's body and its speakernotes frontmatter key.
