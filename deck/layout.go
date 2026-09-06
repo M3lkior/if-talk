@@ -46,11 +46,14 @@ type Slide struct {
 	Title template.HTML
 	// Source is the reference displayed at the bottom of the slide.
 	Source string
-	// Class holds the CSS classes for the slide's main element. A slide that
-	// declares none gets its layout's default (deck.defaultClasses); a slide
-	// that declares a class: key replaces the default wholesale rather than
-	// adding to it, because real slides need to drop a class as often as add
-	// one — several carry no center-align at all.
+	// Class holds the CSS classes for the slide's main element. It is empty
+	// when the slide declares no class: key, and every layout supplies its own
+	// fallback for that case with {{ if .Class }}...{{ else }}...{{ end }}. The
+	// fallback lives in the template rather than in the engine so that a talk
+	// overriding a layout overrides its default classes too — the engine has no
+	// say in what a layout it does not own renders. A class: key therefore
+	// replaces the layout's default wholesale rather than adding to it, which
+	// is what real slides need: several drop the default's center-align.
 	Class string
 	// Height is the height class of the split layout's column container.
 	Height string
@@ -80,6 +83,14 @@ func NewLayouts(folder string) *Layouts {
 
 // Execute renders the slide through the layout with the given name.
 func (l *Layouts) Execute(name string, slide Slide) (template.HTML, error) {
+	// partials.html only defines the shared header/source/notes blocks and has
+	// no body of its own, so naming it as a layout used to render a silently
+	// blank slide. read() lets the name through: it special-cases partials only
+	// on the missing-file branch, which the embedded copy never takes.
+	if name == partialsName {
+		return "", fmt.Errorf("unknown layout %q: %s.html only defines the shared partials, it is not a layout of its own", name, partialsName)
+	}
+
 	partials, err := l.read(partialsName)
 	if err != nil {
 		return "", err

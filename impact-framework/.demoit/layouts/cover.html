@@ -1,4 +1,6 @@
-<main class="{{ .Class }}">
+{{/* Same fallback the embedded cover layout carries: a talk that overrides a
+     layout owns its default classes too, since the engine no longer fills
+     .Class in before the template runs. */}}<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max center-align{{ end }}">
     <div class="small-height"></div>
 
     <div class=" medium no-padding center-align top-align">

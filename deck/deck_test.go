@@ -218,3 +218,29 @@ func TestLoadExposesUnknownFrontmatterKeys(t *testing.T) {
 		t.Fatalf("got %q, want it to contain %q", slides[0], want)
 	}
 }
+
+// Every layout is overridable, and that has to include its default classes:
+// the engine used to fill .Class from a map keyed by layout name before the
+// template ran, so a talk that replaced default.html found its own fallback
+// unreachable. The fallback now lives in the template, which is the file the
+// talk overrides.
+func TestLoadLetsATalkOverrideALayoutsDefaultClasses(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		".demoit/layouts/default.html": `<main class="{{ if .Class }}{{ .Class }}{{ else }}classes-du-talk{{ end }}">{{ .Content }}</main>`,
+		"demoit.md":                    "---\nlayout: default\n---\ncontenu\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if want := `<main class="classes-du-talk">`; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want it to contain %q — a talk's own layout must supply its own default classes", slides[0], want)
+	}
+	if strings.Contains(string(slides[0]), "large-height") {
+		t.Errorf("got %q, want none of the embedded default.html's classes — the talk's layout replaced it wholesale", slides[0])
+	}
+}
