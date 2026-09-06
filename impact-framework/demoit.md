@@ -29,7 +29,7 @@ speakernotes: |
 layout: default
 title: Et l'IA dans tout ça ?
 source: https://arxiv.org/pdf/2311.16863 (Etude  Hugging Face - Octobre 2024)
-class: middle-align
+class: main responsive large-height middle-align
 ---
 
 <!--
@@ -79,7 +79,8 @@ class: middle-align
 
 ---
 layout: default
-title: Je suis Ludovic Dussart
+title: Je suis **Ludovic Dussart**
+class: main responsive xlarge-height center-align
 ---
 
 <!--
@@ -146,10 +147,10 @@ src="/images/me.jpg">
 </div>
 
 ---
-layout: default
+layout: default-h3
 title: Quels outils pour la mesure d'empreinte environnementale dans le digital ?
 source: https://github.com/Green-Software-Foundation/awesome-green-software
-class: middle-align
+class: main responsive large-height center-align middle-align
 speakernotes: |
   une panoplie d'outils par catégorie mais comment aggreger tout ça ?
 ---
@@ -196,8 +197,8 @@ speakernotes: |
 
 ---
 layout: content
-title: On en construit des référentiels chez zatsit
-class: main xlarge-height
+title: On en construit des référentiels chez **zatsit**
+class: main responsive max xlarge-height
 ---
 
 <div class="grid ">
@@ -215,8 +216,8 @@ target="_blank"><em><strong>zatsit</strong> sustainability landscape</em></a>
 
 ---
 layout: content
-title: Et on s'est intéressé à Impact Framework
-class: main large-height
+title: Et on s'est intéressé à **Impact Framework**
+class: main responsive max large-height
 ---
 
 <div class="grid">
@@ -232,7 +233,7 @@ class: main large-height
 ---
 layout: content
 title: Motivations
-class: main large-height center-align
+class: main responsive max large-height center-align
 speakernotes: |
   La mesure de l'impact des logiciels sur des paramètres tels que le carbone, l'eau et l'énergie est
   complexe et nuancée.
@@ -394,7 +395,7 @@ speakernotes: |
 ---
 layout: content
 title: IF - C'est quoi la consommation energétique de zatsit.fr ?
-class: xlarge-height
+class: responsive max xlarge-height
 ---
 
 <!--
@@ -439,7 +440,7 @@ class: xlarge-height
 ---
 layout: content
 title: IF - Visuellement, c'est mieux.
-class: xlarge-height
+class: responsive max xlarge-height
 ---
 
 :::split{cols=4,8 height=xlarge}
@@ -451,7 +452,7 @@ class: xlarge-height
 ---
 layout: content
 title: IF - Visuellement, c'est mieux.
-class: xlarge-height
+class: responsive max xlarge-height
 ---
 
 :::split{cols=4,8 height=xlarge}
@@ -463,7 +464,7 @@ class: xlarge-height
 ---
 layout: content
 title: IF - C'est quoi la suite ?
-class: main large-height center-align
+class: main responsive max large-height center-align
 ---
 
 <div class="large-space"></div>
@@ -484,6 +485,7 @@ class: main large-height center-align
 ---
 layout: default
 title: Merci de votre attention. Des questions ?
+class: main responsive xlarge-height center-align
 ---
 
 <div class="responsive xlarge-height">

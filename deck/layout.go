@@ -39,11 +39,18 @@ const partialsName = "partials"
 type Slide struct {
 	// Talk is the identity of the presentation the slide belongs to.
 	Talk Talk
-	// Title is the slide's title, displayed by the header of most layouts.
-	Title string
+	// Title is the slide's title, displayed by the header of most layouts. It
+	// is rendered from the frontmatter title through the same Markdown pipeline
+	// as the slide body, so an author can write **bold** or other inline
+	// Markdown in a title and an apostrophe is not HTML-entity-escaped.
+	Title template.HTML
 	// Source is the reference displayed at the bottom of the slide.
 	Source string
-	// Class holds extra CSS classes for the slide's main element.
+	// Class holds the CSS classes for the slide's main element. A slide that
+	// declares none gets its layout's default (deck.defaultClasses); a slide
+	// that declares a class: key replaces the default wholesale rather than
+	// adding to it, because real slides need to drop a class as often as add
+	// one — several carry no center-align at all.
 	Class string
 	// Height is the height class of the split layout's column container.
 	Height string

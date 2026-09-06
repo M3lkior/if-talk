@@ -1,0 +1,15 @@
+<header>
+    <nav>
+        <h3 class="max center-left">{{ .Title }}</h3>
+        <div class="grid center-right">
+            {{ range .Talk.Logos }}<div class="circle transparent s6">
+                <img class="responsive" src="{{ . }}">
+            </div>
+            {{ end }}
+        </div>
+    </nav>
+</header>
+<main class="{{ .Class }}">
+{{ .Content }}
+</main>
+{{ template "source" . }}{{ template "notes" . }}
