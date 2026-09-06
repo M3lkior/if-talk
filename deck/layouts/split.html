@@ -1,4 +1,4 @@
-{{ template "header" . }}<main class="{{ .Class }}">
+{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max{{ end }}">
 <split-view class="{{ .Height }}-height">
 {{ .Content }}
 </split-view>

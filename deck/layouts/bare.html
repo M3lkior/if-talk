@@ -1,4 +1,4 @@
-<main class="{{ .Class }}">
+<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max{{ end }}">
 {{ .Content }}
 </main>
 {{ template "notes" . }}

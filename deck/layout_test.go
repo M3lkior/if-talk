@@ -171,3 +171,17 @@ func TestLayoutsRejectAPathInTheName(t *testing.T) {
 		})
 	}
 }
+
+// partials.html defines the shared header/source/notes blocks and nothing
+// else, so naming it as a layout rendered an empty slide with no diagnostic.
+func TestLayoutsRejectThePartialsName(t *testing.T) {
+	t.Parallel()
+
+	got, err := deck.NewLayouts(t.TempDir()).Execute("partials", deck.Slide{Content: "<p>contenu</p>"})
+	if err == nil {
+		t.Fatalf("got %q with no error, want one saying partials is not a layout", got)
+	}
+	if !strings.Contains(err.Error(), "partials") {
+		t.Fatalf("got error %v, want it to name partials", err)
+	}
+}

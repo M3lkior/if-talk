@@ -39,22 +39,6 @@ import (
 // declares none. Every split slide of the existing decks uses xlarge.
 const defaultHeight = "xlarge"
 
-// defaultClasses are the <main> classes each embedded layout uses when a
-// slide names none. A slide's `class:` key replaces them wholesale rather
-// than adding to them, because the deck's real slides need to drop classes as
-// often as add them — several carry no center-align at all. A layout name
-// the talk added itself (not one of these six) gets no default: it hardcodes
-// whatever classes it wants, the same way these six did before this map
-// existed.
-var defaultClasses = map[string]string{
-	"cover":   "responsive max center-align",
-	"default": "main responsive large-height center-align",
-	"quote":   "main responsive large-height center-align middle-align",
-	"split":   "responsive max",
-	"content": "responsive max",
-	"bare":    "responsive max",
-}
-
 // Load reads the deck of the presentation in folder and returns one chunk of
 // HTML per slide. A Markdown deck goes through goldmark and its layouts; an
 // HTML deck is split on --- and returned as it is, exactly as before.
@@ -161,9 +145,6 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 	}
 	if slide.Height == "" {
 		slide.Height = defaultHeight
-	}
-	if slide.Class == "" {
-		slide.Class = defaultClasses[slide.Layout]
 	}
 
 	title, line, err := renderTitle(known.Title, raw.StartLine)
