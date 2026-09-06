@@ -39,6 +39,22 @@ import (
 // declares none. Every split slide of the existing decks uses xlarge.
 const defaultHeight = "xlarge"
 
+// defaultClasses are the <main> classes each embedded layout uses when a
+// slide names none. A slide's `class:` key replaces them wholesale rather
+// than adding to them, because the deck's real slides need to drop classes as
+// often as add them — several carry no center-align at all. A layout name
+// the talk added itself (not one of these six) gets no default: it hardcodes
+// whatever classes it wants, the same way these six did before this map
+// existed.
+var defaultClasses = map[string]string{
+	"cover":   "responsive max center-align title",
+	"default": "main responsive large-height center-align",
+	"quote":   "main responsive large-height center-align middle-align",
+	"split":   "responsive max",
+	"content": "responsive max",
+	"bare":    "responsive max",
+}
+
 // Load reads the deck of the presentation in folder and returns one chunk of
 // HTML per slide. A Markdown deck goes through goldmark and its layouts; an
 // HTML deck is split on --- and returned as it is, exactly as before.
@@ -133,7 +149,6 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 
 	slide := Slide{
 		Talk:      talk,
-		Title:     known.Title,
 		Source:    known.Source,
 		Class:     known.Class,
 		Height:    known.Height,
@@ -147,6 +162,15 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 	if slide.Height == "" {
 		slide.Height = defaultHeight
 	}
+	if slide.Class == "" {
+		slide.Class = defaultClasses[slide.Layout]
+	}
+
+	title, line, err := renderTitle(known.Title, raw.StartLine)
+	if err != nil {
+		return errorHTML(file, line, err)
+	}
+	slide.Title = title
 
 	body, notes, line, err := renderMarkdown(raw, known.Speakernotes)
 	if err != nil {
@@ -161,6 +185,28 @@ func renderSlide(raw RawSlide, talk Talk, layouts *Layouts, file string) templat
 	}
 
 	return rendered
+}
+
+// renderTitle converts a slide's frontmatter title through the same Markdown
+// pipeline as its body, so an author can write **bold** or other inline
+// Markdown in a title, and an apostrophe is not HTML-entity-escaped the way
+// html/template would escape a plain string. A title is a single inline run
+// rather than a block, so the <p>...</p> that goldmark wraps a lone paragraph
+// in is stripped — the header partial already supplies the block element
+// (an <h2>, or a talk-specific layout's own heading tag).
+func renderTitle(title string, firstLine int) (template.HTML, int, error) {
+	if title == "" {
+		return "", 0, nil
+	}
+
+	rendered, line, err := convert([]byte(title), firstLine)
+	if err != nil {
+		return "", line, err
+	}
+
+	inline := strings.TrimSuffix(strings.TrimPrefix(string(rendered), "<p>"), "</p>\n")
+
+	return template.HTML(inline), 0, nil
 }
 
 // renderMarkdown converts a slide's body and its speakernotes frontmatter key.

@@ -26,7 +26,7 @@ func TestLayoutsRenderTheEmbeddedDefault(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		`<h2 class="max center-left">L&#39;impact du numérique</h2>`,
+		`<h2 class="max center-left">L'impact du numérique</h2>`,
 		`src="/images/a.svg"`,
 		`src="/images/b.jpg"`,
 		"<h2>2,5%</h2>",
