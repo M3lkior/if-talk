@@ -162,3 +162,58 @@ func TestCodeDirectiveEscapesItsAttributes(t *testing.T) {
 		t.Fatalf("got %q, want it to contain a&amp;b.yml", got)
 	}
 }
+
+// Forgetting the braces is the likelier typo than mistyping them, and it used
+// to be the quiet one: the attributes were parsed as prose, dropped, and the
+// slide showed an empty component with nothing to explain it.
+func TestDirectiveWithoutBracesAroundItsAttributesIsReported(t *testing.T) {
+	t.Parallel()
+
+	_, errs := render(t, "::term path=sources\n")
+
+	if len(errs) != 1 {
+		t.Fatalf("got %d errors, want 1 — attributes written without braces must not pass silently", len(errs))
+	}
+	if !strings.Contains(errs[0].Message, "term") {
+		t.Errorf("got message %q, want it to name the directive", errs[0].Message)
+	}
+	if !strings.Contains(errs[0].Message, "braces") {
+		t.Errorf("got message %q, want it to say the attributes go between braces", errs[0].Message)
+	}
+}
+
+// Text after a well-formed attribute block is dropped just as quietly.
+func TestDirectiveWithTrailingProseIsReported(t *testing.T) {
+	t.Parallel()
+
+	_, errs := render(t, "::term{path=a} et du texte\n")
+
+	if len(errs) != 1 {
+		t.Fatalf("got %d errors, want 1 — text after a directive is dropped, so it must be reported", len(errs))
+	}
+	if !strings.Contains(errs[0].Message, "term") {
+		t.Errorf("got message %q, want it to name the directive", errs[0].Message)
+	}
+}
+
+// <source-code> highlights nothing when a line attribute is not a number, so
+// `lines=11-` and `lines=a-b` used to reach the slide as dead markup.
+func TestCodeDirectiveRejectsANonNumericLineRange(t *testing.T) {
+	t.Parallel()
+
+	for _, spec := range []string{"11-", "a-b", "-20"} {
+		spec := spec
+		t.Run(spec, func(t *testing.T) {
+			t.Parallel()
+
+			_, errs := render(t, "::code{folder=sources files=a.yml lines="+spec+"}\n")
+
+			if len(errs) != 1 {
+				t.Fatalf("got %d errors for lines=%s, want 1", len(errs), spec)
+			}
+			if !strings.Contains(errs[0].Message, "line number") {
+				t.Errorf("got message %q, want it to say which half is not a line number", errs[0].Message)
+			}
+		})
+	}
+}

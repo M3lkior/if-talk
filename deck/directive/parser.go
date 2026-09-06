@@ -19,6 +19,7 @@ package directive
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -83,8 +84,17 @@ func (b *blockParser) Open(_ ast.Node, reader text.Reader, pc parser.Context) (a
 	attrs, malformed := readAttributes(reader)
 
 	node := NewNode(name, attrs, fenceLength, lineNumber+1)
-	if malformed {
+
+	switch rest, _ := reader.PeekLine(); {
+	case malformed:
 		addError(pc, node.Line, "the %s directive has an attribute block that does not parse: check the braces", name)
+	case !util.IsBlank(rest):
+		// Whatever is left on the line after the name and the attribute block
+		// is dropped by the parser. Silence there is how `::term path=sources`
+		// — braces forgotten — renders an empty, dead <web-term> with nothing
+		// to explain it, the very failure the malformed-block error above
+		// exists to prevent.
+		addError(pc, node.Line, "the %s directive has trailing content on its line: a directive takes the whole line, and its attributes go between braces, as %s%s{key=value}", name, strings.Repeat(":", fenceLength), name)
 	}
 
 	if !node.Container {
