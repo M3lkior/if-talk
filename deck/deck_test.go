@@ -61,6 +61,64 @@ func TestLoadRendersAMarkdownDeck(t *testing.T) {
 	}
 }
 
+func TestLoadRendersTheTitleAsMarkdown(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.md": "---\nlayout: default\ntitle: L'IA et le **carbone**\n---\ncontenu\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	// The exact string below already proves there is no <p> wrapper around the
+	// title (goldmark would otherwise have produced
+	// `<h2 ...><p>L'IA et le <strong>carbone</strong></p>\n</h2>`) and that the
+	// apostrophe is bare rather than HTML-entity-escaped as `&#39;`.
+	if want := `<h2 class="max center-left">L'IA et le <strong>carbone</strong></h2>`; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want it to contain %q", slides[0], want)
+	}
+}
+
+func TestLoadDefaultsAMainClassFromTheLayout(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.md": "---\nlayout: split\n---\n::term{path=sources}\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if want := `<main class="responsive max">`; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want it to contain %q — a slide with no class: key should get its layout's default from deck.defaultClasses", slides[0], want)
+	}
+}
+
+func TestLoadClassKeyReplacesTheLayoutDefault(t *testing.T) {
+	t.Parallel()
+
+	folder := writeDeck(t, map[string]string{
+		"demoit.md": "---\nlayout: default\nclass: main responsive xlarge-height\n---\ncontenu\n",
+	})
+
+	slides, err := deck.Load(folder, "")
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if want := `<main class="main responsive xlarge-height">`; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want it to contain %q — a class: key must replace the default layout's classes wholesale, not add to them", slides[0], want)
+	}
+	if strings.Contains(string(slides[0]), "center-align") {
+		t.Errorf("got %q, want no center-align — class: replaces the default layout's hardcoded classes instead of appending to them, so a slide that declares xlarge-height must not also carry the default's own large-height/center-align", slides[0])
+	}
+}
+
 func TestLoadPrefersMarkdownOverHTML(t *testing.T) {
 	t.Parallel()
 
