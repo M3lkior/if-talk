@@ -50,7 +50,7 @@ Seul `handlers/code.go` est retouché, sans changement de comportement : ses hel
 ```
 deck/
   deck.go         Load(folder, locale) ([]Slide, error)
-  resolve.go      demoit-<loc>.md > demoit.md > demoit-<loc>.html > demoit.html
+  resolve.go      demoit-<loc>.md > demoit-<loc>.html > demoit.md > demoit.html
   split.go        découpage en slides (fence-aware) + extraction frontmatter
   talk.go         lecture .demoit/talk.yml
   layout.go       résolution layout (.demoit/layouts/ puis embed) + exécution
@@ -379,11 +379,13 @@ Absent : valeurs par défaut, aucun logo. Un talk peut donc démarrer avec un se
 `deck.Load(folder, locale)` cherche dans l'ordre :
 
 1. `demoit-<locale>.md`
-2. `demoit.md`
-3. `demoit-<locale>.html`
+2. `demoit-<locale>.html`
+3. `demoit.md`
 4. `demoit.html`
 
-Le premier trouvé gagne. `locale` vient du flag `--locale` ; vide, les entrées 1 et 3 sont ignorées.
+Le premier trouvé gagne. `locale` vient du flag `--locale` ; vide, les entrées 1 et 2 sont ignorées.
+
+**Correctif d'après implémentation.** Cette section listait d'abord `demoit-<locale>.md`, `demoit.md`, `demoit-<locale>.html`, `demoit.html` — le format avant la locale. Le code (`deck/deck.go`, `resolve`) fait l'inverse, la locale avant le format, et c'est le code qui a raison : avec l'ordre initial, `--locale en` sur `impact-framework` aurait servi le `demoit.md` français au lieu du `demoit-en.html` anglais, ce qui contredit directement la décision 4 (coexistence `.md` / `.html` par locale). L'ordre ci-dessus est donc celui du code.
 
 Un deck `.html` est traité comme aujourd'hui : découpage sur `---` et injection brute, sans goldmark, sans layout, sans frontmatter. Le comportement des talks non migrés est donc strictement inchangé.
 
