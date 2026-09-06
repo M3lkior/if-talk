@@ -18,12 +18,16 @@ limitations under the License.
 package directive
 
 import (
-	"strings"
+	"strconv"
 
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 )
+
+// columnCount is the width of the beercss grid a split{cols=} lays panes out
+// on: a weight outside 1..12 has no matching "sN" class.
+const columnCount = 12
 
 // transformer rewrites a split directive that carries column weights into a
 // beercss grid, and reports directives whose name is not in the catalogue.
@@ -79,6 +83,18 @@ func (t *transformer) toGrid(node *Node) {
 		return
 	}
 
+	// A weight becomes a beercss "sN" class verbatim, and beercss has twelve
+	// columns. Anything else — `cols=a,b`, `cols=13,4` — is a class no
+	// stylesheet defines, so the pane silently takes the whole row on stage
+	// and nothing says why.
+	for _, weight := range cols {
+		if width, err := strconv.Atoi(weight); err != nil || width < 1 || width > columnCount {
+			addError(t.ctx, node.Line, "the split directive has the column weight %q: beercss has %d columns, so every weight is a whole number from 1 to %d", weight, columnCount, columnCount)
+
+			return
+		}
+	}
+
 	class := "grid"
 	if height := node.Attrs["height"]; height != "" {
 		class += " " + height + "-height"
@@ -92,13 +108,4 @@ func (t *transformer) toGrid(node *Node) {
 		node.ReplaceChild(node, child, column)
 		column.AppendChild(column, child)
 	}
-}
-
-// gridAttributes renders the class of a grid or column node.
-func gridAttributes(attrs map[string]string) (string, error) {
-	if class := strings.TrimSpace(attrs["class"]); class != "" {
-		return " class=\"" + class + "\"", nil
-	}
-
-	return "", nil
 }

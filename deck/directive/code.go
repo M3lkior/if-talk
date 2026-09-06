@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"strconv"
 	"strings"
 )
 
@@ -78,8 +79,23 @@ func lineRanges(spec string, fileCount int) (string, string, error) {
 		if !found {
 			return "", "", fmt.Errorf("the line range %q is not of the form start-end", lineRange)
 		}
-		first = append(first, strings.TrimSpace(start))
-		last = append(last, strings.TrimSpace(end))
+
+		// Both halves have to be numbers. <source-code> reads them straight
+		// out of the attribute and highlights nothing when they are not, so
+		// `lines=11-` and `lines=a-b` used to travel all the way to the slide
+		// as dead markup — exactly the failure ::code exists to prevent by
+		// owning the three-separator contract on the author's behalf.
+		startLine, err := lineNumber(start, lineRange)
+		if err != nil {
+			return "", "", err
+		}
+		endLine, err := lineNumber(end, lineRange)
+		if err != nil {
+			return "", "", err
+		}
+
+		first = append(first, startLine)
+		last = append(last, endLine)
 	}
 
 	return strings.Join(first, ";"), strings.Join(last, ";"), nil
@@ -96,4 +112,15 @@ func splitList(value string) []string {
 	}
 
 	return items
+}
+
+// lineNumber trims one half of a line range and checks it really is a number,
+// naming the whole range in the error so the author can find it on the line.
+func lineNumber(half, lineRange string) (string, error) {
+	trimmed := strings.TrimSpace(half)
+	if _, err := strconv.Atoi(trimmed); err != nil {
+		return "", fmt.Errorf("the line range %q is not of the form start-end: %q is not a line number", lineRange, trimmed)
+	}
+
+	return trimmed, nil
 }

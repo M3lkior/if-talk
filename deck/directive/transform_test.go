@@ -67,3 +67,47 @@ func TestUnknownDirectiveIsReported(t *testing.T) {
 		t.Errorf("got message %q, want it to name the unknown directive", errs[0].Message)
 	}
 }
+
+// The class of a hand-written :::grid / :::col is escaped the same way every
+// other directive attribute is: an unescaped " would end the attribute early
+// and turn the rest of the class into markup of its own.
+func TestGridClassIsHTMLEscaped(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, ":::grid{class=\"a&b\"}\ncontenu\n:::\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if strings.Contains(got, `class="a&b"`) {
+		t.Fatalf("got %q, want the ampersand escaped", got)
+	}
+	if want := `<div class="a&amp;b">`; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want it to contain %q", got, want)
+	}
+}
+
+// A weight becomes a beercss "sN" class verbatim, so anything that is not a
+// whole number from 1 to 12 is a class no stylesheet defines.
+func TestSplitWithColsRejectsANonNumericWeight(t *testing.T) {
+	t.Parallel()
+
+	for _, cols := range []string{"a,b", "13,4"} {
+		cols := cols
+		t.Run(cols, func(t *testing.T) {
+			t.Parallel()
+
+			got, errs := render(t, ":::split{cols="+cols+"}\n::term{path=a}\n\n::term{path=b}\n:::\n")
+
+			if len(errs) != 1 {
+				t.Fatalf("got %d errors for cols=%s, want 1", len(errs), cols)
+			}
+			if !strings.Contains(errs[0].Message, "12") {
+				t.Errorf("got message %q, want it to name the twelve-column grid", errs[0].Message)
+			}
+			if strings.Contains(got, `class="s`) {
+				t.Errorf("got %q, want no sN column class built from a weight that is not one", got)
+			}
+		})
+	}
+}

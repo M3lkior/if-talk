@@ -20,6 +20,7 @@ package directive
 import (
 	"fmt"
 	"html"
+	"strings"
 
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
@@ -119,6 +120,19 @@ func copyAttributes(keys ...string) func(map[string]string) (string, error) {
 func splitAttributes(attrs map[string]string) (string, error) {
 	if height := attrs["height"]; height != "" {
 		return fmt.Sprintf(` class="%s"`, html.EscapeString(height+"-height")), nil
+	}
+
+	return "", nil
+}
+
+// gridAttributes renders the class of a grid or column node, whether the
+// transformer built it from a split{cols=} or the author wrote :::grid /
+// :::col by hand. The value is escaped for the same reason as its siblings
+// above: a " in a hand-written class ends the attribute early and turns the
+// rest of the line into markup.
+func gridAttributes(attrs map[string]string) (string, error) {
+	if class := strings.TrimSpace(attrs["class"]); class != "" {
+		return fmt.Sprintf(` class="%s"`, html.EscapeString(class)), nil
 	}
 
 	return "", nil
