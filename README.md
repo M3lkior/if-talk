@@ -88,8 +88,9 @@ source: https://example.com
 Regular *Markdown* content: lists, `code`, images, tables, and so on.
 ```
 
-Two things worth knowing about that separator:
+Three things worth knowing about that separator:
  + Since `---` cuts a slide, it can't double as Markdown's horizontal-rule syntax anymore — write `***` for a rule instead.
+ + For the same reason it can't underline a setext heading either. `Titre` on one line and `---` on the next used to be an `<h2>`; it is now a one-line slide followed by a new one. Write `## Titre`, or put the text in the slide's `title:` frontmatter key.
  + The splitter skips a `---` written inside a fenced code block, but **not** one written inside an HTML comment — a commented-out block containing a literal `---` still starts a new slide.
 
 ### Frontmatter
@@ -109,7 +110,7 @@ A body paragraph that happens to start the same way a frontmatter key does (a lo
 
 ### Layouts
 
-Six layouts ship with demoit: `cover`, `default`, `content`, `quote`, `split`, `bare` — pick one with the `layout:` key. To change how one looks, or to add a layout of your own, drop a `.html` template at `.demoit/layouts/<name>.html` in your presentation; a same-named file there always wins over the built-in one, and a name demoit has never heard of works too as long as some slide's `layout:` points at it.
+Six layouts ship with demoit: `cover`, `default`, `content`, `quote`, `split`, `bare` — pick one with the `layout:` key. To change how one looks, or to add a layout of your own, drop a `.html` template at `.demoit/layouts/<name>.html` in your presentation; a same-named file there always wins over the built-in one, and a name demoit has never heard of works too as long as some slide's `layout:` points at it. A layout owns its default classes as well as its markup: write `<main class="{{ if .Class }}{{ .Class }}{{ else }}your defaults{{ end }}">` so a slide that names no `class:` key still gets something. (`partials` is not a layout — it only defines the shared header/source/notes fragments, and naming it in a `layout:` key is an error.)
 
 ### Directives
 
@@ -118,7 +119,7 @@ Directives put a live web component (a terminal, a browser, the code viewer, a s
  + `::name{key=value}` on its own line — a single, self-closing element.
  + `:::name{key=value}` ... `:::` — a block that can contain other Markdown, or other directives.
 
-Attribute values are `key=value`, separated by spaces; wrap a value that contains a space in double quotes (`title="My Window"`).
+Attribute values are `key=value`, separated by spaces; wrap a value that contains a space in double quotes (`title="My Window"`). The braces are not optional and the directive takes the whole line: `::term path=sources` (braces forgotten) or `::term{path=a} and some text` (text after the block) is reported as an error on that slide rather than quietly rendering a component with nothing in it.
 
 ```markdown
 :::split{cols=4,8 height=xlarge}
@@ -130,7 +131,7 @@ Attribute values are `key=value`, separated by spaces; wrap a value that contain
 
  + `::term{path=}`, `::browser{src=}` and `::vscode{path=}` open a terminal, an embedded browser, and a VS Code instance.
  + `::code{folder= files= lines= style=}` renders the tabbed, IDE-like code viewer. `files` and `lines` are comma-separated — `lines=11-20,4-9` gives one highlight range per file, in the same order as `files`. Those ranges **highlight** the given lines; the file is always shown in full, never truncated. `style` picks a chroma theme (`vs` if you omit it, which is also what the viewer defaults to on its own).
- + `:::split{...}` puts its content side by side. `height=` alone gives an auto-arranged split, the same one the `split` layout produces; add `cols=4,8` (one weight per pane, out of 12) for explicit column widths. Leave a **blank line** between panes when using `cols=` — the columns are counted one per paragraph/block, so two panes glued together without a blank line count as a single, wider pane and the widths won't line up.
+ + `:::split{...}` puts its content side by side. `height=` alone gives an auto-arranged split, the same one the `split` layout produces; add `cols=4,8` (one weight per pane, out of 12) for explicit column widths — each weight has to be a whole number from 1 to 12, and a `lines=` range has to be two numbers, or the slide reports the mistake instead of rendering it. Leave a **blank line** between panes when using `cols=` — the columns are counted one per paragraph/block, so two panes glued together without a blank line count as a single, wider pane and the widths won't line up.
  + `:::window{title=}` frames its content like a little macOS window; `:::speakernotes` marks content as speaker notes (the `speakernotes:` frontmatter key is the simpler way to do the same thing).
 
 ### `.demoit/talk.yml`
