@@ -9,7 +9,9 @@ Trois symptômes, une seule cause.
 
 **Poser une classe au bon endroit relève de la devinette.** `max` veut dire deux choses différentes dans le même repo : `max-inline-size:100%` sur `<main class="responsive max">` (`deck/layouts/bare.html:1`), mais `flex:1` sur `<h2 class="max center-left">` parce que la règle `:is(nav,.row)>.max{flex:1}` gagne dans un `<nav>` (`deck/layouts/partials.html:3`). `responsive` vaut `inline-size:-webkit-fill-available` sur un bloc, mais `block-size:3rem; inline-size:3rem; object-fit:cover` sur une `<img>` — donc les logos du header partial sont des vignettes de 3 rem recadrées, ce qui n'est visiblement pas l'intention. Et `center-left`, `center-right`, `padding`, utilisées 11 fois dans les layouts, **n'existent pas dans beercss** : zéro règle, aucun effet, depuis toujours.
 
-**Le rendu change d'un écran à l'autre.** `impact-framework/.demoit/style.css:28` fait de `rem` un `3vw`, donc les `3.5625rem` de `h1` valent 205 px sur un 1920 et 137 px sur un 1280 — pendant que la grille beercss bascule ses colonnes sur des seuils de **largeur** (601 px, 993 px). Une slide dessinée sur un écran 16:10 déporté et projetée en 16:9 change à la fois de taille de police et de nombre de colonnes. Les hauteurs nommées aggravent le tableau : `.xlarge-height{block-size:64rem}` vaut 3686 px à 57.6 px/rem, soit 3,4 fois la hauteur utile.
+**Le rendu change d'un écran à l'autre, et pas là où on le croit.** La grille beercss bascule ses colonnes sur des seuils de **largeur** (601 px, 993 px), et `style.css` mélange trois systèmes d'unités : des `rem`, des `px` (`#progression{height:6px}`) et des `vw` (`split-view{height:calc(100% - 14vw)}`, `.mermaid{height:calc(100% - 14vw)}`, `.logos`, `#qr{width:15vw}`). Une slide dessinée sur un 16:10 déporté et projetée en 16:9 change donc de nombre de colonnes et de hauteurs de panneaux, mais pas de taille de police.
+
+Un détail mesuré, contre-intuitif, et qui commande toute la migration : **le `font-size: 3vw` de `style.css:28` est mort.** `index.tmpl.html` charge `/style.css` en ligne 6 et beercss en ligne 7, donc le `html{font-size:var(--size)}` de beercss arrive après, à spécificité égale, et gagne par ordre de source. `rem` vaut **16 px**, ce que confirment deux mesures indépendantes sur le rendu de référence : la barre de progression fait bien ses 6 px littéraux (l'image est au 1:1) et le `<h2>` du header, un `2.8125rem`, rend à 45 px. Les hauteurs nommées sont donc saines — `.xlarge-height` vaut 1024 px, pas 3686 — et toute conversion qui supposerait un `rem` à 57.6 px triplerait le deck entier.
 
 **Il n'y a pas de thème sombre.** `<body class="light">` est figé dans `handlers/resources/index.tmpl.html:19`, et les composants web portent leurs couleurs en dur dans leurs styles de shadow DOM.
 
@@ -115,7 +117,9 @@ Poppins passe du CDN Google à `<talk>/.demoit/fonts/`, servi par la route `/fon
 
 `--stage-scale` vaut `min(innerWidth / 1920, innerHeight / 1080)`, posé par un listener de `resize` de quelques lignes dans `demoit.js`. La division longueur / longueur en CSS pur (`calc(100vw / 1920px)`) est spécifiée mais pas encore implémentée dans les moteurs, d'où le JS.
 
-**`font-size` de la racine passe de `3vw` à `57.6px` fixes** — exactement `3vw` de 1920. Conséquence : toutes les tailles en `rem` du deck valent ce qu'elles valent aujourd'hui sur un écran 1920, puis la scène entière est mise à l'échelle. Sur n'importe quel viewport 16:9, **le rendu est identique à l'actuel au pixel près**. Seul un viewport non-16:9 diffère : il letterboxe au lieu de s'étirer, ce qui est l'objectif.
+**`font-size` de la racine reste à 16 px** — la valeur effective aujourd'hui, et aussi celle du preflight de Tailwind. Rien à convertir : toutes les tailles en `rem` du deck valent exactement ce qu'elles valent aujourd'hui, et la scène entière est mise à l'échelle par-dessus. Sur n'importe quel viewport 16:9, **le rendu est identique à l'actuel au pixel près**. Seul un viewport non-16:9 diffère : il letterboxe au lieu de s'étirer, ce qui est l'objectif.
+
+Ce que la scène supprime, ce sont les `vw` : un `calc(100% - 14vw)` sur `split-view` mesurait la fenêtre, il mesure désormais la scène, donc une constante.
 
 Le fond de letterbox est un jeton (`--stage-void`), aujourd'hui noir de fait (`style.css:27`).
 
@@ -249,7 +253,9 @@ Les tests touchés : `deck/directive/transform_test.go:90` (et ses attentes de c
 
 ### Le seul endroit où préserver l'existant est impossible
 
-`render.go` garde l'API `height=`, mais les valeurs derrière changent. Aujourd'hui `.xlarge-height{block-size:64rem}` vaut 3686 px à 57.6 px/rem — 3,4 fois la hauteur de scène — et seule la requête `@media (max-height:1024px)` le ramène à 45 rem, soit 2592 px, encore le double. Ces valeurs sont incohérentes ; les jetons `--height-stage-{sm,md,lg,xl}` sont recalibrés sur la scène de 1080 px, à l'œil, sur les slides `split` du deck. C'est un changement de rendu assumé, pas une régression.
+`render.go` garde l'API `height=`, mais les valeurs derrière changent de nature : elles deviennent des **parts de la zone principale de la slide** (`small` 40 %, `medium` 65 %, `large` 85 %, `xlarge` 100 %) au lieu de longueurs absolues.
+
+Deux raisons, et aucune n'est « les valeurs actuelles sont absurdes » — à 16 px/rem elles sont saines. La première : `.xlarge-height` vaut 1024 px pour une scène de 1080 px, donc dès qu'un header et un footer sont là, le panneau dépasse. La seconde : la valeur de repli dépend d'un `@media (max-height:1024px)`, une requête sur la **fenêtre**, qui n'a plus aucun sens quand la scène a une hauteur fixe. Une part de la zone principale ne peut pas déborder par construction et ne dépend d'aucune requête média. C'est un changement de rendu assumé sur les slides `split`, à vérifier contre la référence.
 
 ## Périmètre de fichiers
 
