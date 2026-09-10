@@ -780,17 +780,58 @@ customElements.define('vs-code', VSCode);
 // Diagrams
 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
 
-// Left exactly as it was, and the diagram keeps mermaid's light theme in both
-// modes. On a dark slide it gets a light ground of its own instead -- see
-// `.dark .mermaid` in this talk's style.css.
+// The diagram keeps mermaid's light theme in both modes. On a dark slide it
+// gets a light ground of its own instead -- see `.dark .mermaid` in this talk's
+// style.css. mermaid's own dark theme sizes this figure's nodes narrower than
+// the labels it paints into them, and a legible light figure beats a clipped
+// dark one.
 //
-// KNOWN GAP: this deck's block-beta figure has its labels clipped on a dark
-// slide, and only there. mermaid sizes each node from a width it measures and
-// then paints a wider label into it. What was tried and did not move it:
-// mermaid's own `dark` theme, `base` driven from the deck's tokens, pinning
-// fontFamily and fontSize, pinning them in themeVariables too, block padding,
-// and deferring the render until the webfont was loaded. What did matter was
-// unrelated and is fixed: a `display: inline-block` on `svg` in the chassis
-// was compressing the container mermaid measures, which clipped the figure in
-// *both* modes.
-mermaid.initialize({ startOnLoad: true });
+// Rendering waits for Poppins because mermaid sizes each node from a width it
+// measures, so measuring with the fallback font and painting Poppins clips the
+// label. document.fonts.ready is not enough on its own -- it resolves once
+// *pending* loads settle, and a face nothing has laid out yet is not pending.
+// A missing Font Loading API must not mean no diagram, hence the fallback.
+//
+// KNOWN DEFECT, and it is this one figure only: its node labels are still
+// clipped on the right. The pre-migration render was not, and one intermediate
+// build during the migration was not either, but the state that produced it
+// could not be reconstructed by bisection. What was tried and ruled out, each
+// measured on a deterministic render: mermaid's `dark` and `base` themes,
+// `base` driven from the deck's own tokens, pinning fontFamily and fontSize
+// (also inside themeVariables), block padding, a local-only font stack for
+// `.mermaid`, rendering immediately versus after the font, keeping or dropping
+// the source-restore loop, and the `.dark .mermaid` rule below.
+//
+// One real cause was found and fixed on the way: a `display: inline-block` on
+// `svg` in the chassis compressed the container mermaid measures and clipped
+// the figure in both themes. See styles/demoit.src.css, which now restores
+// inline images for img and video only. Do not put padding on `.mermaid`
+// either, for the same reason.
+function renderMermaid() {
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // A render replaces the element's content with the SVG, so the original
+    // source is kept aside: without it a second run would be handed mermaid's
+    // own output to parse.
+    document.querySelectorAll('.mermaid, pre.mermaid').forEach(node => {
+        if (node.dataset.source === undefined) {
+            node.dataset.source = node.textContent;
+        } else {
+            node.textContent = node.dataset.source;
+        }
+        delete node.dataset.processed;
+    });
+
+    mermaid.run();
+}
+
+if (document.fonts && document.fonts.load) {
+    Promise.all([
+        document.fonts.load('400 16px Poppins'),
+        document.fonts.load('700 16px Poppins'),
+    ])
+        .catch(() => {})
+        .then(renderMermaid);
+} else {
+    renderMermaid();
+}
