@@ -26,6 +26,7 @@
     --color-fg: #3d4043;
     --color-fg-muted: #6b7075;
     --color-surface: #fff;
+    --color-outline: #d5d7da;
     --color-void: #000;
     --height-stage-small: 40%;
     --height-stage-medium: 65%;
@@ -280,6 +281,64 @@
   [hidden]:where(:not([hidden="until-found"])) {
     display: none !important;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 400;
+    line-height: normal;
+  }
+
+  h1 {
+    font-size: 3.5625rem;
+  }
+
+  h2 {
+    font-size: 2.8125rem;
+  }
+
+  h3 {
+    font-size: 2.25rem;
+  }
+
+  h4 {
+    font-size: 2rem;
+  }
+
+  h5 {
+    font-size: 1.75rem;
+  }
+
+  h6 {
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin-block: .5rem;
+  }
+
+  main :is(ul, ol) {
+    list-style: revert;
+    margin-block: 1rem;
+    padding-inline-start: 2.5rem;
+  }
+
+  blockquote {
+    padding: 1rem;
+  }
+
+  :is(img, svg, video) {
+    vertical-align: middle;
+    display: inline-block;
+  }
+
+  table {
+    border-spacing: 0;
+    text-align: start;
+    inline-size: 100%;
+  }
+
+  :is(th, td) {
+    padding: .5rem;
+  }
 }
 
 @layer components;
@@ -362,6 +421,11 @@
     margin: 0;
   }
 
+  .slide-narrow {
+    max-inline-size: 75rem;
+    margin-inline: auto;
+  }
+
   .slide-prose > * + * {
     margin-block-start: 1rem;
   }
@@ -375,7 +439,7 @@
     border-block-end: var(--rule) solid var(--color-main);
     align-items: center;
     gap: 1rem;
-    padding-inline: .3rem;
+    padding-inline: 1rem;
     display: flex;
   }
 

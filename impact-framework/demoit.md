@@ -1,9 +1,9 @@
 ---
 layout: cover
-class: responsive max center-align title
+class: slide-main flex flex-col items-center justify-center text-center title
 ---
 
-<h1 class=" medium no-padding center-align top-align" style="color: white">A la découverte d'Impact Framework.</h1>
+<h1 class="m-0" style="color: white">A la découverte d'Impact Framework.</h1>
 <h3 style="color: white">10 Avril 2025</h3>
 
 ---
@@ -13,11 +13,11 @@ speakernotes: |
   ADEME: Agence de l'environnement et de la maîtrise de l'énergie part of Agence de la Transition Ecologique
 ---
 
-<div class="large-space"></div>
-<div class="large-space"></div>
-<div class="large-space"></div>
-<div class="large-space"></div>
-<div class="large-space"></div>
+<div class="h-12"></div>
+<div class="h-12"></div>
+<div class="h-12"></div>
+<div class="h-12"></div>
+<div class="h-12"></div>
 
 <!--    <h3>D'après l'ADEME,</h3>-->
 
@@ -25,12 +25,12 @@ speakernotes: |
 
 ## *10%* de l’électricité en France est consommée par le numérique.
 
-<div class="large-space"></div>
+<div class="h-12"></div>
 ---
 layout: default
 title: Et l'IA dans tout ça ?
 source: https://arxiv.org/pdf/2311.16863 (Etude  Hugging Face - Octobre 2024)
-class: main responsive large-height middle-align
+class: slide-main slide-narrow slide-prose flex flex-col items-center justify-center
 ---
 
 <!--
@@ -65,7 +65,7 @@ class: main responsive large-height middle-align
 </div>
 -->
 
-<blockquote style="font-size: 2.0rem;">
+<blockquote class="border-main border-l-4 px-4 text-left" style="font-size: 2.0rem;">
   <h5><em>0.015</em> kWh consommé pour charger votre téléphone.</h5>
   <h5><em>0.042</em> kWh consommé par <em>ChatGPT</em> pour générer 1000 textes.</h5>
   <h5><em>0.080</em> kWh consommé par <em>votre TV</em> par heure de fonctionnement.</h5>
@@ -74,14 +74,14 @@ class: main responsive large-height middle-align
 </blockquote>
 <br/>
 
-<div class="center-align middle-align">
+<div class="flex items-center justify-center text-center">
   <h5>👉 https://huggingface.co/spaces/genai-impact/ecologits-calculator</h5>
 </div>
 
 ---
 layout: default
 title: Je suis **Ludovic Dussart**
-class: main responsive xlarge-height center-align
+class: slide-main slide-narrow h-stage-xlarge text-center
 ---
 
 <!--
@@ -111,38 +111,30 @@ class: main responsive xlarge-height center-align
 </div>
 -->
 
-<div class="grid large-space">
-  <div class="m6 s6 l6">
-    <div class="round extra">
-      <img style="block-size: 15rem; " src="/images/me.jpg">
+<div class="grid grid-cols-12 gap-8">
+  <div class="col-span-6">
+    <div>
+      <img class="rounded-card" style="block-size: 15rem; " src="/images/me.jpg">
     </div>
   </div>
-  <div class="m6 s6 l6">
-    <div class="center-align middle">
+  <div class="col-span-6">
+    <div class="text-center">
       <h4>Solutions architect <em>@zatsit</em></h4>
       <h4><em>AsyncAPI</em> maintainer</h4>
       <h4>Open Source <em>fanatic</em></h4>
     </div>
   </div>
-  <div class="s12"><h2 class="left-align"><em>Où me trouver ?</em></h2></div>
-  <div class="s1"><img class="circle " src="/images/twitter.jpg"/></div>
-  <div class="s3 left-align"><h5>@ldussart</h5></div>
-  <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-  <div class="s3 left-align"><h5>ldussart.bsky.social</h5></div>
-  <div class="s1"><img class="circle " src="/images/linkedin.png"/></div>
-  <div class="s3 left-align"><h5>Ludovic Dussart</h5></div>
-  <div class="s1"></div>
-  <div class="s3"></div>
-  <div class="s12"><h2 class="left-align"><em>Où nous trouver ?</em></h2></div>
-  <div class="s1"><img class="circle " src="/images/web.png"/></div>
-  <div class="s3 left-align"><h5>https://zatsit.fr</h5></div>
-  <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-  <div class="s3 left-align"><h5>zatsit.bsky.social</h5></div>
-  <div class="s1"><img class="circle " src="/images/blog.png"/></div>
-  <div class="s3 left-align"><h5>https://blog.zatsit.fr</h5></div>
+  <div class="col-span-12"><h2 class="text-left"><em>Où me trouver ?</em></h2></div>
+  <div class="contact-row"><img src="/images/twitter.jpg"/><h5>@ldussart</h5></div>
+  <div class="contact-row"><img src="/images/bsky.png"/><h5>ldussart.bsky.social</h5></div>
+  <div class="contact-row"><img src="/images/linkedin.png"/><h5>Ludovic Dussart</h5></div>
+  <div class="col-span-12"><h2 class="text-left"><em>Où nous trouver ?</em></h2></div>
+  <div class="contact-row"><img src="/images/web.png"/><h5>https://zatsit.fr</h5></div>
+  <div class="contact-row"><img src="/images/bsky.png"/><h5>zatsit.bsky.social</h5></div>
+  <div class="contact-row"><img src="/images/blog.png"/><h5>https://blog.zatsit.fr</h5></div>
 </div>
-<div class="medium-space"></div>
-<div class="s12">
+<div class="h-8"></div>
+<div>
   <h6>« Engager notre <em>expertise numérique</em> au service de <em>l'impact des entreprises</em>, en créant un écosystème <em>durable</em>, <em>partenarial</em> et <em>positif</em> »</h6>
 </div>
 
@@ -150,12 +142,15 @@ class: main responsive xlarge-height center-align
 layout: default-h3
 title: Quels outils pour la mesure d'empreinte environnementale dans le digital ?
 source: https://github.com/Green-Software-Foundation/awesome-green-software
-class: main responsive large-height center-align middle-align
+class: slide-main slide-narrow flex items-center justify-center
 speakernotes: |
   une panoplie d'outils par catégorie mais comment aggreger tout ça ?
 ---
 
-<table class="border small-space xlarge-text">
+<!-- beercss gave this table inline-size:100% and border-spacing:0, a bottom
+     rule on every row but the last from table.border, no cell padding from
+     small-space, and 1.6rem type from the talk's own xlarge-text. -->
+<table class="w-full border-collapse text-[1.6rem] [&_td]:p-0 [&_th]:p-0 [&_tbody_tr:not(:last-child)_td]:border-b [&_tbody_tr:not(:last-child)_td]:border-outline">
   <tr>
     <th>Code based</th>
     <td>codecarbon.io</td>
@@ -198,17 +193,17 @@ speakernotes: |
 ---
 layout: content
 title: On en construit des référentiels chez **zatsit**
-class: main responsive max xlarge-height
+class: slide-main h-stage-xlarge
 ---
 
-<div class="grid ">
-  <div class="s4">
-    <a class="large-text small center large-space" href="https://github.com/zatsit-oss/awesome-impact-tools"
-       target="_blank"><em><strong>zatsit</strong> OSS awesome-impact-tools</em></a></h6>
-    <img class="max large-height center" src="/images/zatsit-awesome.png"/>
+<div class="grid h-full grid-cols-12 gap-4">
+  <div class="col-span-4">
+    <a class="block text-base" href="https://github.com/zatsit-oss/awesome-impact-tools"
+       target="_blank"><em><strong>zatsit</strong> OSS awesome-impact-tools</em></a>
+    <img class="mx-auto h-stage-large max-w-full object-contain" src="/images/zatsit-awesome.png"/>
   </div>
-  <div class="s8">
-    <a class="large-text small center large-space" href="https://sustainability.zatsit.fr/landscape/?group=all&view-mode=grid"
+  <div class="col-span-8">
+    <a class="block text-base" href="https://sustainability.zatsit.fr/landscape/?group=all&view-mode=grid"
        target="_blank"><em><strong>zatsit</strong> sustainability landscape</em></a>
     <web-browser src="https://sustainability-ldscp.zatsit.fr/?view-mode=grid"></web-browser>
   </div>
@@ -217,23 +212,23 @@ class: main responsive max xlarge-height
 ---
 layout: content
 title: Et on s'est intéressé à **Impact Framework**
-class: main responsive max large-height
+class: slide-main h-stage-large
 ---
 
-<div class="grid">
-  <div class="s12 center-align">
+<div class="grid h-full grid-cols-12 gap-4">
+  <div class="col-span-12 text-center">
     <h3>La mesure d'impact des logiciels doit s'appuyer sur des <em>standards</em> et des <em>outils</em>
     </h3>
   </div>
-  <div class="s12 center-align responsive large-height ">
-    <img style=" block-size: 40rem;" src="/images/gsf.avif"/>
+  <div class="col-span-12 w-full text-center">
+    <img class="mx-auto max-h-full object-contain" src="/images/gsf.avif"/>
   </div>
 </div>
 
 ---
 layout: content
 title: Motivations
-class: main responsive max large-height center-align
+class: slide-main h-stage-large text-center
 speakernotes: |
   La mesure de l'impact des logiciels sur des paramètres tels que le carbone, l'eau et l'énergie est
   complexe et nuancée.
@@ -257,19 +252,19 @@ speakernotes: |
   eux-mêmes l'analyse.
 ---
 
-<div class="large-space"></div>
+<div class="h-12"></div>
 <h3>Impact Framework (IF) vise à faciliter le <em>calcul</em> et le <em>partage</em> des impacts
 environnementaux des logiciels.</h3>
 
-<div class="large-space"></div>
-<div class="large-space"></div>
-<h3 class="left-align">Les promesses du framework ?</h3>
-<div class="large-space"></div>
-<div class="large-space"></div>
-<div class="absolute center" >
-  <h4 class="left-align"><em>Transformez</em> vos observations en unités d'impacts.</h4>
-  <h4 class="left-align"><em>Explorez</em> des scénarios de simulation.</h4>
-  <h4 class="left-align"><em>Stockez</em> vos manifestes et <em>démocratisez-</em>les.</h4>
+<div class="h-12"></div>
+<div class="h-12"></div>
+<h3 class="text-left">Les promesses du framework ?</h3>
+<div class="h-12"></div>
+<div class="h-12"></div>
+<div class="absolute left-1/2 -translate-x-1/2">
+  <h4 class="text-left"><em>Transformez</em> vos observations en unités d'impacts.</h4>
+  <h4 class="text-left"><em>Explorez</em> des scénarios de simulation.</h4>
+  <h4 class="text-left"><em>Stockez</em> vos manifestes et <em>démocratisez-</em>les.</h4>
 </div>
 
 ---
@@ -345,20 +340,23 @@ speakernotes: |
   - carbon : eqCo2
 ---
 
-:::grid{class="grid xlarge-height"}
-:::col{class="s12"}
+:::grid{class="grid grid-cols-12 gap-4 h-stage-xlarge"}
+:::col{class="col-span-12"}
 #### Pour pouvoir commencer à *mesurer*, il faut d'abord *observer* et *récolter* de la data.
 :::
 
-:::col{class="s4 xlarge-height"}
-<text>
+:::col{class="col-span-4 h-stage-xlarge"}
+<div>
 
 <br/>
-<p class="xlarge-text">Il existe quelques plugins permettant de nourrir les pipelines en <em>inputs
+<p class="text-[1.6rem]">Il existe quelques plugins permettant de nourrir les pipelines en <em>inputs
 :</em>
 </p>
 
-<ul class="xlarge-text">
+<!-- list-disc and pl-8 are asked for explicitly: beercss restored native list
+     markers with `:not(nav) > :is(ul,ol) { all: revert }`, and Tailwind's
+     preflight does not. -->
+<ul class="list-disc pl-8 text-[1.6rem]">
   <li>Mock Observations</li>
   <li>AWS Importer</li>
   <li>Azure Importer</li>
@@ -368,10 +366,10 @@ speakernotes: |
   <li>et pleins d'autres à suivres ...</li>
 </ul>
 
-</text>
+</div>
 :::
 
-:::col{class="s8 xlarge-height"}
+:::col{class="col-span-8 h-stage-xlarge"}
 ::vscode{path=sources}
 
 <!--        <web-browser src="https://explorer.if.greensoftware.foundation/"></web-browser>-->
@@ -395,7 +393,7 @@ speakernotes: |
 ---
 layout: content
 title: IF - C'est quoi la consommation energétique de zatsit.fr ?
-class: responsive max xlarge-height
+class: slide-main h-stage-xlarge
 ---
 
 <!--
@@ -440,7 +438,7 @@ class: responsive max xlarge-height
 ---
 layout: content
 title: IF - Visuellement, c'est mieux.
-class: responsive max xlarge-height
+class: slide-main h-stage-xlarge
 ---
 
 :::split{cols=4,8 height=xlarge}
@@ -452,7 +450,7 @@ class: responsive max xlarge-height
 ---
 layout: content
 title: IF - Visuellement, c'est mieux.
-class: responsive max xlarge-height
+class: slide-main h-stage-xlarge
 ---
 
 :::split{cols=4,8 height=xlarge}
@@ -464,51 +462,42 @@ class: responsive max xlarge-height
 ---
 layout: content
 title: IF - C'est quoi la suite ?
-class: main responsive max large-height center-align
+class: slide-main h-stage-large text-center
 ---
 
-<div class="large-space"></div>
+<div class="h-12"></div>
 <h3>Imaginez la configuration des pipelines Impact Framework (IF) en WYSIWYG ?</h3>
 
-<div class="large-space"></div>
-<div class="large-space"></div>
-<div class="absolute center">
-  <h4 class="left-align"><em>Essayez</em> le framework.</h4>
-  <h4 class="left-align"><em>Contribuer</em> et faire évoluer l'existant.</h4>
-  <h4 class="left-align"><em>Proposez</em> de nouveaux plugins ?</h4>
-  <h4 class="left-align"><em>Constituez</em> vos propres manifests.</h4>
+<div class="h-12"></div>
+<div class="h-12"></div>
+<div class="absolute left-1/2 -translate-x-1/2">
+  <h4 class="text-left"><em>Essayez</em> le framework.</h4>
+  <h4 class="text-left"><em>Contribuer</em> et faire évoluer l'existant.</h4>
+  <h4 class="text-left"><em>Proposez</em> de nouveaux plugins ?</h4>
+  <h4 class="text-left"><em>Constituez</em> vos propres manifests.</h4>
 </div>
-<div class="absolute bottom center">
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2">
   <img src="/images/hacktoberfest.png" style="width: 20rem"/>
 </div>
 
 ---
 layout: default
 title: Merci de votre attention. Des questions ?
-class: main responsive xlarge-height center-align
+class: slide-main slide-narrow h-stage-xlarge text-center
 ---
 
-<div class="responsive xlarge-height">
+<div class="w-full">
   <img src="/images/qa.png" style="block-size: 25rem;"/>
 </div>
-<div class="absolute bottom">
-  <div class="grid  large-space">
-    <div class="s12"><h2 class="left-align"><em>Où me trouver ?</em></h2></div>
-    <div class="s1"><img class="circle " src="/images/twitter.jpg"/></div>
-    <div class="s3 left-align"><h5>@ldussart</h5></div>
-    <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-    <div class="s3 left-align"><h5>ldussart.bsky.social</h5></div>
-    <div class="s1"><img class="circle " src="/images/linkedin.png"/></div>
-    <div class="s3 left-align"><h5>Ludovic Dussart</h5></div>
-    <div class="s1"></div>
-    <div class="s3"></div>
-    <div class="s12"><h2 class="left-align"><em>Où nous trouver ?</em></h2></div>
-    <div class="s1"><img class="circle " src="/images/web.png"/></div>
-    <div class="s3 left-align"><h5>https://zatsit.fr</h5></div>
-    <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-    <div class="s3 left-align"><h5>zatsit.bsky.social</h5></div>
-    <div class="s1"><img class="circle " src="/images/blog.png"/></div>
-    <div class="s3 left-align"><h5>https://blog.zatsit.fr</h5></div>
-
+<div class="absolute inset-x-0 bottom-0">
+  <div class="grid grid-cols-12 gap-8">
+    <div class="col-span-12"><h2 class="text-left"><em>Où me trouver ?</em></h2></div>
+    <div class="contact-row"><img src="/images/twitter.jpg"/><h5>@ldussart</h5></div>
+    <div class="contact-row"><img src="/images/bsky.png"/><h5>ldussart.bsky.social</h5></div>
+    <div class="contact-row"><img src="/images/linkedin.png"/><h5>Ludovic Dussart</h5></div>
+    <div class="col-span-12"><h2 class="text-left"><em>Où nous trouver ?</em></h2></div>
+    <div class="contact-row"><img src="/images/web.png"/><h5>https://zatsit.fr</h5></div>
+    <div class="contact-row"><img src="/images/bsky.png"/><h5>zatsit.bsky.social</h5></div>
+    <div class="contact-row"><img src="/images/blog.png"/><h5>https://blog.zatsit.fr</h5></div>
   </div>
 </div>

@@ -35,7 +35,7 @@ should not have to re-emit the chassis from its own sheet, and an @utility is
 otherwise emitted only where it is seen -- so reordering a layout could silently
 drop one.
 */
-@source inline("slide-main slide-header slide-footer slide-prose contact-row card");
+@source inline("slide-main slide-narrow slide-header slide-footer slide-prose contact-row card");
 
 /*
 deck/directive builds these class names in Go (transform.go toGrid, render.go
@@ -46,6 +46,68 @@ already documents for a weight outside 1..12.
 */
 @source inline("col-span-{1,2,3,4,5,6,7,8,9,10,11,12}");
 @source inline("h-stage-{small,medium,large,xlarge}");
+
+/*
+The base sheet every deck in this repo was authored against.
+
+beercss supplied a type scale and a vertical rhythm that no slide mentions, so
+nothing signalled their existence -- and Tailwind's preflight deliberately
+makes none of those assumptions: it sets headings to `font-size: inherit` and
+strips list markers. Without this block, every heading in every deck renders at
+body size and every list loses its bullets.
+
+The values are beercss 3.7.8's own, so a deck's `<h3>` means exactly what it
+meant before. In @layer base, so a utility on a slide still wins.
+*/
+@layer base {
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 400;
+        line-height: normal;
+    }
+
+    h1 { font-size: 3.5625rem; }
+    h2 { font-size: 2.8125rem; }
+    h3 { font-size: 2.25rem; }
+    h4 { font-size: 2rem; }
+    h5 { font-size: 1.75rem; }
+    h6 { font-size: 1.5rem; }
+
+    p {
+        margin-block: 0.5rem;
+    }
+
+    /* beercss restored native list rendering with `:not(nav) > :is(ul,ol)
+       { all: revert }`. `all` would revert the colours too and break the dark
+       theme, so only the three properties that matter are restored. */
+    main :is(ul, ol) {
+        margin-block: 1rem;
+        padding-inline-start: 2.5rem;
+        list-style: revert;
+    }
+
+    blockquote {
+        padding: 1rem;
+    }
+
+    /* Tailwind's preflight makes images block-level. Every deck here was
+       written against inline images: that is what let `text-align: center` on
+       a slide centre a photo, and what made a `<div><img/></div>` pair sit on
+       one line. Blocks would silently left-align every image in the repo. */
+    :is(img, svg, video) {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    table {
+        inline-size: 100%;
+        border-spacing: 0;
+        text-align: start;
+    }
+
+    :is(th, td) {
+        padding: 0.5rem;
+    }
+}
 
 /*
 Legibility tokens. A display profile redefines these and only these: never a

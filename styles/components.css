@@ -26,11 +26,28 @@ item defaults to min-content and would otherwise refuse to shrink.
     overflow-x: hidden;
 }
 
+/*
+The measure `responsive` gave a slide when it was written *without* `max`.
+beercss had two rules and the second narrowed the first:
+
+  :is(main,header,footer,section).responsive     { max-inline-size: 75rem; margin: 0 auto }
+  :is(main,header,footer,section).responsive.max { max-inline-size: 100% }
+
+So `responsive` alone capped the content at 1200px and centred it, while
+`responsive max` let it fill the width -- two different layouts from one class
+plus a modifier, which is exactly the trap this migration is getting out of.
+Here the wide case is the default and the cap is the class you add.
+*/
+@utility slide-narrow {
+    max-inline-size: 75rem;
+    margin-inline: auto;
+}
+
 @utility slide-header {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding-inline: 0.3rem;
+    padding-inline: 1rem;
     color: var(--color-main);
     border-block-end: var(--rule) solid var(--color-main);
 }

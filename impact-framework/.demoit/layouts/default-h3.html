@@ -11,7 +11,7 @@
      that does declare a class: key still gets it verbatim, replacing this
      fallback wholesale, the same replace semantics every other layout
      follows. */}}
-<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-prose flex flex-col justify-center text-center{{ end }}">
+<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-narrow slide-prose flex flex-col justify-center text-center{{ end }}">
 {{ .Content }}
 </main>
 {{ template "source" . }}{{ template "notes" . }}
