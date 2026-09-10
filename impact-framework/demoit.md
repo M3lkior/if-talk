@@ -66,16 +66,16 @@ class: main responsive large-height middle-align
 -->
 
 <blockquote style="font-size: 2.0rem;">
-<h5><em>0.015</em> kWh consommé pour charger votre téléphone.</h5>
-<h5><em>0.042</em> kWh consommé par <em>ChatGPT</em> pour générer 1000 textes.</h5>
-<h5><em>0.080</em> kWh consommé par <em>votre TV</em> par heure de fonctionnement.</h5>
-<h5><em>1.0</em> kWh consommé par <em>votre frigo</em> sur une journée.</h5>
-<h5><em>2.9</em> kWh consommé par <em>Stable Diffusion</em> pour générer 1000 images.</h5>
+  <h5><em>0.015</em> kWh consommé pour charger votre téléphone.</h5>
+  <h5><em>0.042</em> kWh consommé par <em>ChatGPT</em> pour générer 1000 textes.</h5>
+  <h5><em>0.080</em> kWh consommé par <em>votre TV</em> par heure de fonctionnement.</h5>
+  <h5><em>1.0</em> kWh consommé par <em>votre frigo</em> sur une journée.</h5>
+  <h5><em>2.9</em> kWh consommé par <em>Stable Diffusion</em> pour générer 1000 images.</h5>
 </blockquote>
 <br/>
 
 <div class="center-align middle-align">
-        <h5>👉 https://huggingface.co/spaces/genai-impact/ecologits-calculator</h5>
+  <h5>👉 https://huggingface.co/spaces/genai-impact/ecologits-calculator</h5>
 </div>
 
 ---
@@ -112,39 +112,38 @@ class: main responsive xlarge-height center-align
 -->
 
 <div class="grid large-space">
-<div class="m6 s6 l6">
-<div class="round extra">
-<img style="block-size: 15rem; "
-src="/images/me.jpg">
-</div>
-</div>
-<div class="m6 s6 l6">
-<div class="center-align middle">
-<h4>Solutions architect <em>@zatsit</em></h4>
-<h4><em>AsyncAPI</em> maintainer</h4>
-<h4>Open Source <em>fanatic</em></h4>
-</div>
-</div>
-<div class="s12"><h2 class="left-align"><em>Où me trouver ?</em></h2></div>
-<div class="s1"><img class="circle " src="/images/twitter.jpg"/></div>
-<div class="s3 left-align"><h5>@ldussart</h5></div>
-<div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-<div class="s3 left-align"><h5>ldussart.bsky.social</h5></div>
-<div class="s1"><img class="circle " src="/images/linkedin.png"/></div>
-<div class="s3 left-align"><h5>Ludovic Dussart</h5></div>
-<div class="s1"></div>
-<div class="s3"></div>
-<div class="s12"><h2 class="left-align"><em>Où nous trouver ?</em></h2></div>
-<div class="s1"><img class="circle " src="/images/web.png"/></div>
-<div class="s3 left-align"><h5>https://zatsit.fr</h5></div>
-<div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-<div class="s3 left-align"><h5>zatsit.bsky.social</h5></div>
-<div class="s1"><img class="circle " src="/images/blog.png"/></div>
-<div class="s3 left-align"><h5>https://blog.zatsit.fr</h5></div>
+  <div class="m6 s6 l6">
+    <div class="round extra">
+      <img style="block-size: 15rem; " src="/images/me.jpg">
+    </div>
+  </div>
+  <div class="m6 s6 l6">
+    <div class="center-align middle">
+      <h4>Solutions architect <em>@zatsit</em></h4>
+      <h4><em>AsyncAPI</em> maintainer</h4>
+      <h4>Open Source <em>fanatic</em></h4>
+    </div>
+  </div>
+  <div class="s12"><h2 class="left-align"><em>Où me trouver ?</em></h2></div>
+  <div class="s1"><img class="circle " src="/images/twitter.jpg"/></div>
+  <div class="s3 left-align"><h5>@ldussart</h5></div>
+  <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
+  <div class="s3 left-align"><h5>ldussart.bsky.social</h5></div>
+  <div class="s1"><img class="circle " src="/images/linkedin.png"/></div>
+  <div class="s3 left-align"><h5>Ludovic Dussart</h5></div>
+  <div class="s1"></div>
+  <div class="s3"></div>
+  <div class="s12"><h2 class="left-align"><em>Où nous trouver ?</em></h2></div>
+  <div class="s1"><img class="circle " src="/images/web.png"/></div>
+  <div class="s3 left-align"><h5>https://zatsit.fr</h5></div>
+  <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
+  <div class="s3 left-align"><h5>zatsit.bsky.social</h5></div>
+  <div class="s1"><img class="circle " src="/images/blog.png"/></div>
+  <div class="s3 left-align"><h5>https://blog.zatsit.fr</h5></div>
 </div>
 <div class="medium-space"></div>
 <div class="s12">
-<h6>« Engager notre <em>expertise numérique</em> au service de <em>l'impact des entreprises</em>, en créant un écosystème <em>durable</em>, <em>partenarial</em> et <em>positif</em> »</h6>
+  <h6>« Engager notre <em>expertise numérique</em> au service de <em>l'impact des entreprises</em>, en créant un écosystème <em>durable</em>, <em>partenarial</em> et <em>positif</em> »</h6>
 </div>
 
 ---
@@ -157,43 +156,43 @@ speakernotes: |
 ---
 
 <table class="border small-space xlarge-text">
-<tr>
-<th>Code based</th>
-<td>codecarbon.io</td>
-<td>JoularJX</td>
-<td>ecoCode</td>
-<td>etc</td>
-</tr>
-<tr>
-<th>Web</th>
-<td>ecoIndex</td>
-<td>EcoGrader</td>
-<td>Website Carbon Calculator</td>
-<td>GreenIT-Analysis</td>
-<td>etc</td>
-</tr>
-<tr>
-<th>Infra / Hardware</th>
-<td>Kepler</td>
-<td>Scaphandre</td>
-<td>PowerJoular</td>
-<td>CO2 Scope</td>
-<td>etc</td>
-</tr>
-<tr>
-<th>Cloud based</th>
-<td>Cloud Carbon Footprint</td>
-<td>Customer Carbon Footprint Tool for AWS</td>
-<td>Microsoft Emissions Impact Dashboard</td>
-<td>Carbon Footprint</td>
-<td>OVHcloud Carbon Calculator</td>
-<td>etc</td>
-</tr>
-<tr>
-<th>AI</th>
-<td>carbontracker</td>
-<td>Experiment Impact Tracker Library</td>
-</tr>
+  <tr>
+    <th>Code based</th>
+    <td>codecarbon.io</td>
+    <td>JoularJX</td>
+    <td>ecoCode</td>
+    <td>etc</td>
+  </tr>
+  <tr>
+    <th>Web</th>
+    <td>ecoIndex</td>
+    <td>EcoGrader</td>
+    <td>Website Carbon Calculator</td>
+    <td>GreenIT-Analysis</td>
+    <td>etc</td>
+  </tr>
+  <tr>
+    <th>Infra / Hardware</th>
+    <td>Kepler</td>
+    <td>Scaphandre</td>
+    <td>PowerJoular</td>
+    <td>CO2 Scope</td>
+    <td>etc</td>
+  </tr>
+  <tr>
+    <th>Cloud based</th>
+    <td>Cloud Carbon Footprint</td>
+    <td>Customer Carbon Footprint Tool for AWS</td>
+    <td>Microsoft Emissions Impact Dashboard</td>
+    <td>Carbon Footprint</td>
+    <td>OVHcloud Carbon Calculator</td>
+    <td>etc</td>
+  </tr>
+  <tr>
+    <th>AI</th>
+    <td>carbontracker</td>
+    <td>Experiment Impact Tracker Library</td>
+  </tr>
 </table>
 
 ---
@@ -203,16 +202,16 @@ class: main responsive max xlarge-height
 ---
 
 <div class="grid ">
-<div class="s4">
-<a class="large-text small center large-space" href="https://github.com/zatsit-oss/awesome-impact-tools"
-target="_blank"><em><strong>zatsit</strong> OSS awesome-impact-tools</em></a></h6>
-<img class="max large-height center" src="/images/zatsit-awesome.png"/>
-</div>
-<div class="s8">
-<a class="large-text small center large-space" href="https://sustainability.zatsit.fr/landscape/?group=all&view-mode=grid"
-target="_blank"><em><strong>zatsit</strong> sustainability landscape</em></a>
-<web-browser src="https://sustainability-ldscp.zatsit.fr/?view-mode=grid"></web-browser>
-</div>
+  <div class="s4">
+    <a class="large-text small center large-space" href="https://github.com/zatsit-oss/awesome-impact-tools"
+       target="_blank"><em><strong>zatsit</strong> OSS awesome-impact-tools</em></a></h6>
+    <img class="max large-height center" src="/images/zatsit-awesome.png"/>
+  </div>
+  <div class="s8">
+    <a class="large-text small center large-space" href="https://sustainability.zatsit.fr/landscape/?group=all&view-mode=grid"
+       target="_blank"><em><strong>zatsit</strong> sustainability landscape</em></a>
+    <web-browser src="https://sustainability-ldscp.zatsit.fr/?view-mode=grid"></web-browser>
+  </div>
 </div>
 
 ---
@@ -222,13 +221,13 @@ class: main responsive max large-height
 ---
 
 <div class="grid">
-<div class="s12 center-align">
-<h3>La mesure d'impact des logiciels doit s'appuyer sur des <em>standards</em> et des <em>outils</em>
-</h3>
-</div>
-<div class="s12 center-align responsive large-height ">
-<img style=" block-size: 40rem;" src="/images/gsf.avif"/>
-</div>
+  <div class="s12 center-align">
+    <h3>La mesure d'impact des logiciels doit s'appuyer sur des <em>standards</em> et des <em>outils</em>
+    </h3>
+  </div>
+  <div class="s12 center-align responsive large-height ">
+    <img style=" block-size: 40rem;" src="/images/gsf.avif"/>
+  </div>
 </div>
 
 ---
@@ -268,9 +267,9 @@ environnementaux des logiciels.</h3>
 <div class="large-space"></div>
 <div class="large-space"></div>
 <div class="absolute center" >
-<h4 class="left-align"><em>Transformez</em> vos observations en unités d'impacts.</h4>
-<h4 class="left-align"><em>Explorez</em> des scénarios de simulation.</h4>
-<h4 class="left-align"><em>Stockez</em> vos manifestes et <em>démocratisez-</em>les.</h4>
+  <h4 class="left-align"><em>Transformez</em> vos observations en unités d'impacts.</h4>
+  <h4 class="left-align"><em>Explorez</em> des scénarios de simulation.</h4>
+  <h4 class="left-align"><em>Stockez</em> vos manifestes et <em>démocratisez-</em>les.</h4>
 </div>
 
 ---
@@ -360,13 +359,13 @@ speakernotes: |
 </p>
 
 <ul class="xlarge-text">
-<li>Mock Observations</li>
-<li>AWS Importer</li>
-<li>Azure Importer</li>
-<li>Datadog Importer</li>
-<li>cloud-storage-metadata</li>
-<li>prometheus-importer</li>
-<li>et pleins d'autres à suivres ...</li>
+  <li>Mock Observations</li>
+  <li>AWS Importer</li>
+  <li>Azure Importer</li>
+  <li>Datadog Importer</li>
+  <li>cloud-storage-metadata</li>
+  <li>prometheus-importer</li>
+  <li>et pleins d'autres à suivres ...</li>
 </ul>
 
 </text>
@@ -474,13 +473,13 @@ class: main responsive max large-height center-align
 <div class="large-space"></div>
 <div class="large-space"></div>
 <div class="absolute center">
-<h4 class="left-align"><em>Essayez</em> le framework.</h4>
-<h4 class="left-align"><em>Contribuer</em> et faire évoluer l'existant.</h4>
-<h4 class="left-align"><em>Proposez</em> de nouveaux plugins ?</h4>
-<h4 class="left-align"><em>Constituez</em> vos propres manifests.</h4>
+  <h4 class="left-align"><em>Essayez</em> le framework.</h4>
+  <h4 class="left-align"><em>Contribuer</em> et faire évoluer l'existant.</h4>
+  <h4 class="left-align"><em>Proposez</em> de nouveaux plugins ?</h4>
+  <h4 class="left-align"><em>Constituez</em> vos propres manifests.</h4>
 </div>
 <div class="absolute bottom center">
-<img src="/images/hacktoberfest.png" style="width: 20rem"/>
+  <img src="/images/hacktoberfest.png" style="width: 20rem"/>
 </div>
 
 ---
@@ -490,26 +489,26 @@ class: main responsive xlarge-height center-align
 ---
 
 <div class="responsive xlarge-height">
-<img src="/images/qa.png" style="block-size: 25rem;"/>
+  <img src="/images/qa.png" style="block-size: 25rem;"/>
 </div>
 <div class="absolute bottom">
-<div class="grid  large-space">
-<div class="s12"><h2 class="left-align"><em>Où me trouver ?</em></h2></div>
-<div class="s1"><img class="circle " src="/images/twitter.jpg"/></div>
-<div class="s3 left-align"><h5>@ldussart</h5></div>
-<div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-<div class="s3 left-align"><h5>ldussart.bsky.social</h5></div>
-<div class="s1"><img class="circle " src="/images/linkedin.png"/></div>
-<div class="s3 left-align"><h5>Ludovic Dussart</h5></div>
-<div class="s1"></div>
-<div class="s3"></div>
-<div class="s12"><h2 class="left-align"><em>Où nous trouver ?</em></h2></div>
-<div class="s1"><img class="circle " src="/images/web.png"/></div>
-<div class="s3 left-align"><h5>https://zatsit.fr</h5></div>
-<div class="s1"><img class="circle " src="/images/bsky.png"/></div>
-<div class="s3 left-align"><h5>zatsit.bsky.social</h5></div>
-<div class="s1"><img class="circle " src="/images/blog.png"/></div>
-<div class="s3 left-align"><h5>https://blog.zatsit.fr</h5></div>
+  <div class="grid  large-space">
+    <div class="s12"><h2 class="left-align"><em>Où me trouver ?</em></h2></div>
+    <div class="s1"><img class="circle " src="/images/twitter.jpg"/></div>
+    <div class="s3 left-align"><h5>@ldussart</h5></div>
+    <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
+    <div class="s3 left-align"><h5>ldussart.bsky.social</h5></div>
+    <div class="s1"><img class="circle " src="/images/linkedin.png"/></div>
+    <div class="s3 left-align"><h5>Ludovic Dussart</h5></div>
+    <div class="s1"></div>
+    <div class="s3"></div>
+    <div class="s12"><h2 class="left-align"><em>Où nous trouver ?</em></h2></div>
+    <div class="s1"><img class="circle " src="/images/web.png"/></div>
+    <div class="s3 left-align"><h5>https://zatsit.fr</h5></div>
+    <div class="s1"><img class="circle " src="/images/bsky.png"/></div>
+    <div class="s3 left-align"><h5>zatsit.bsky.social</h5></div>
+    <div class="s1"><img class="circle " src="/images/blog.png"/></div>
+    <div class="s3 left-align"><h5>https://blog.zatsit.fr</h5></div>
 
-</div>
+  </div>
 </div>
