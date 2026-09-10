@@ -36,6 +36,15 @@ reach into a dot-directory -- .demoit/layouts.
 @source "../";
 
 /*
+The components are excluded on purpose. They carry no Tailwind class in the
+light DOM -- their styles live in their own shadow roots -- but the extractor
+reads any word that could be a class name, comments included, so prose about
+`display: inline-block` or a `data-demoit-hidden` attribute was quietly adding
+utilities nothing uses.
+*/
+@source not "../.demoit/js/";
+
+/*
 deck/directive assembles these in Go, so they appear in no source file. The
 engine sheet declares them too; a talk that overrides deck/layouts/split.html
 needs them from its own build.
