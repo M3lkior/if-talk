@@ -8,6 +8,7 @@
       --tw-skew-x: initial;
       --tw-skew-y: initial;
       --tw-border-style: solid;
+      --tw-font-weight: initial;
     }
   }
 }
@@ -17,6 +18,7 @@
     --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
     --spacing: .25rem;
+    --font-weight-bold: 700;
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
     --color-main: #0f15fd;
@@ -490,12 +492,25 @@
     padding-inline: calc(var(--spacing) * 4);
   }
 
+  .pb-1 {
+    padding-bottom: var(--spacing);
+  }
+
   .text-center {
     text-align: center;
   }
 
   .text-left {
     text-align: left;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .font-bold {
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
   }
 
   .text-fg-muted {
@@ -624,4 +639,9 @@ body {
   syntax: "*";
   inherits: false;
   initial-value: solid;
+}
+
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false
 }

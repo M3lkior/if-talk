@@ -35,7 +35,15 @@ import (
 
 //go:embed resources/index.tmpl.html
 var indexHTML string
-var indexTemplate = template.Must(template.New("index").Funcs(template.FuncMap{"hash": hash}).Parse(indexHTML))
+var indexTemplate = template.Must(template.New("index").Funcs(templateFuncs).Parse(indexHTML))
+
+// templateFuncs is shared by every page template. `hash` busts the cache of a
+// file served out of the presentation folder; `engineHash` does the same for
+// the stylesheet embedded in the binary, which `hash` cannot see.
+var templateFuncs = template.FuncMap{
+	"hash":       hash,
+	"engineHash": EngineCSSHash,
+}
 
 // Page describes a page of the demo.
 type Page struct {

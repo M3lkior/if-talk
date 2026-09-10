@@ -14,6 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// The stage is 1920x1080 CSS pixels, scaled to fit the window. Dividing a
+// length by a length in calc() is specified but not implemented in browsers,
+// so the factor is computed here.
+//
+// Scaling with transform rather than by shrinking a root font size is
+// deliberate: it keeps the tty iframe 1920 logical pixels wide, so xterm.js
+// always measures the same grid and a demo does not reflow according to the
+// room it is shown in.
+function fitStage() {
+    if (!document.querySelector('.stage')) {
+        return;
+    }
+
+    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.documentElement.style.setProperty('--stage-scale', scale);
+}
+
+window.addEventListener('resize', fitStage);
+fitStage();
+
 class BaseHTMLElement extends HTMLElement {
     constructor() {
         super();
@@ -629,12 +649,82 @@ channel.onmessage = function(e) {
         return;
     }
 
+    if(e.data.hasOwnProperty("theme") ) {
+        // Another window switched the theme or the display profile.
+        demoitTheme.apply(e.data.theme, e.data.display || demoitTheme.profile());
+    }
+
     if(e.data.hasOwnProperty("destinationSlideId") ) {
         // The Speaker notes window received a slide change event, and forwards it to
         // the Main presentation window.
         // The Main presentation window advances to the new current slide.
         window.location.href = "/" + e.data.destinationSlideId;
     }
+}
+
+const DISPLAY_PROFILES = ['screen', 'tv', 'projector'];
+
+// Theme and display profile live on documentElement, are remembered per
+// browser, and are broadcast so that the speaker-notes window and /grid follow
+// rather than staying white while the stage goes dark. The inline script in
+// index.tmpl.html reads them back before the first paint, which is what keeps a
+// navigation from flashing.
+//
+// A display profile only ever changes legibility -- contrast, font weight, rule
+// thickness. Never geometry: that is what makes it safe to switch on stage.
+const demoitTheme = {
+    get() {
+        return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    },
+
+    profile() {
+        return document.documentElement.dataset.display || 'screen';
+    },
+
+    // apply sets the state without broadcasting it, so that a window reacting
+    // to a message does not echo it back.
+    apply(theme, display) {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.dataset.display = display;
+        try {
+            localStorage.setItem('demoit_theme', theme);
+            localStorage.setItem('demoit_display', display);
+        } catch (e) {
+            // Nothing to remember is better than nothing to render.
+        }
+        // The components live in shadow roots and cannot see a class on
+        // documentElement change; this is how they learn.
+        document.dispatchEvent(new CustomEvent('demoit:theme', { detail: { theme, display } }));
+    },
+
+    set(theme, display) {
+        this.apply(theme, display);
+        channel.postMessage({ theme, display });
+    },
+
+    toggle() {
+        this.set(this.get() === 'dark' ? 'light' : 'dark', this.profile());
+    },
+
+    cycleProfile() {
+        const at = DISPLAY_PROFILES.indexOf(this.profile());
+        this.set(this.get(), DISPLAY_PROFILES[(at + 1) % DISPLAY_PROFILES.length]);
+    },
+};
+
+window.demoitTheme = demoitTheme;
+
+if (typeof ThemeEnabled !== 'undefined' && ThemeEnabled) {
+    document.addEventListener('keydown', event => {
+        // nav-arrows already binds the arrows, PageUp/PageDown and space, so t
+        // and d are free.
+        if (event.key === 't') {
+            demoitTheme.toggle();
+        }
+        if (event.key === 'd') {
+            demoitTheme.cycleProfile();
+        }
+    });
 }
 
 class VSCode extends BaseHTMLElement {

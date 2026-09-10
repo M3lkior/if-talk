@@ -1,0 +1,30 @@
+/*
+Design tokens of this talk. Copied from styles/tokens.css and free to diverge:
+this is where the talk's palette lives.
+
+Must contain @theme blocks and nothing else -- tailwind.src.css imports it with
+`theme(reference)`, and Tailwind rejects a referenced file that carries any
+other rule.
+*/
+@theme {
+    --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Roboto Mono", ui-monospace, monospace;
+
+    /* The accent. #0f15fd is nearly black on a dark ground, hence the lighter
+       companion the dark palette swaps in. */
+    --color-main: #0f15fd;
+    --color-main-dark: #7c81ff;
+
+    --color-fg: #3d4043;
+    --color-fg-muted: #6b7075;
+    --color-surface: #ffffff;
+    --color-outline: #d5d7da;
+    --color-void: #000000;
+
+    --height-stage-small: 40%;
+    --height-stage-medium: 65%;
+    --height-stage-large: 85%;
+    --height-stage-xlarge: 100%;
+
+    --radius-card: 2rem;
+}

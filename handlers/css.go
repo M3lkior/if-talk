@@ -18,7 +18,9 @@ limitations under the License.
 package handlers
 
 import (
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"net/http"
 	"strings"
 	"time"
@@ -34,6 +36,22 @@ import (
 //
 //go:embed resources/demoit.css
 var engineCSS string
+
+// engineCSSHash is the cache buster of /demoit.css, computed once from the
+// embedded bytes. The `hash` template function cannot do it: it reads the
+// presentation folder, and this stylesheet is compiled into the binary, so it
+// would hand every template an empty query string and let a browser keep a
+// stylesheet from an older build.
+var engineCSSHash = func() string {
+	sum := sha256.Sum256([]byte(engineCSS))
+
+	return hex.EncodeToString(sum[:])[:10]
+}()
+
+// EngineCSSHash is the cache buster templates append to /demoit.css.
+func EngineCSSHash() string {
+	return engineCSSHash
+}
 
 // EngineCSS serves the embedded chassis stylesheet.
 func EngineCSS(w http.ResponseWriter, r *http.Request) {
