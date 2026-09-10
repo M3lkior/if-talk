@@ -10,15 +10,25 @@
 			// is readable here. Before the first paint: the notes window is open
 			// on the speaker's own screen for the whole talk, and a white flash
 			// there is as unwelcome as one on stage.
+			//
+			// ?theme= and ?display= win over what was remembered, as they do on a
+			// slide, so this window can be opened straight into a given theme.
 			(function () {
+				const params = new URLSearchParams(location.search);
+				let theme = params.get('theme');
+				let display = params.get('display');
+
 				try {
-					if (localStorage.getItem('demoit_theme') === 'dark') {
-						document.documentElement.classList.add('dark');
-					}
-					document.documentElement.dataset.display = localStorage.getItem('demoit_display') || 'screen';
+					theme = theme || localStorage.getItem('demoit_theme');
+					display = display || localStorage.getItem('demoit_display');
 				} catch (e) {
-					document.documentElement.dataset.display = 'screen';
+					// A locked-down browser throws; the default theme is fine.
 				}
+
+				if (theme === 'dark') {
+					document.documentElement.classList.add('dark');
+				}
+				document.documentElement.dataset.display = display || 'screen';
 			})();
 		</script>
   </head>
