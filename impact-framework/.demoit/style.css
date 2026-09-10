@@ -13,188 +13,135 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+/*
+This talk's own layer, loaded after /demoit.css and /tailwind.css so that it
+wins.
+
+Everything that became a design token now lives in .demoit/tokens.css: the
+palette, the pane heights, and the seventeen .poppins-* classes that were one
+font-weight each -- font-thin, font-normal, font-medium and font-bold cover
+them.
+
+Gone with them:
+
+  html, body, #top { font-size: 3vw }
+      A dead rule. beercss was loaded after this stylesheet and its own
+      html { font-size: var(--size) } won by source order, so a rem has always
+      been 16px here. The stage keeps it that way.
+
+  img { height: 75% }
+      A global rule on every image in the deck, which quietly overrode any
+      height a slide asked for -- including the header logos' own size.
+
+  #top, .main-slide, .gb-shape-1, .logos, .full-width, #qr
+      Unused: no deck references any of them, and #qr belongs to sample/,
+      which has its own copy of this rule.
+
+  #app, body { display:flex }, html { width/height }, header, split-view,
+  #progression, .main, .xlarge-*, .xsmall-*
+      The chassis in /demoit.css carries these now.
+
+Poppins is served from .demoit/fonts through the /fonts/ route, which existed
+and served nothing. A talk has to render with no network, and a CDN link made
+that impossible. The unicode-range values come from Google's own stylesheet:
+the latin subset has no Latin Extended-A, and latin-ext has no base letters,
+so French needs both.
+*/
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 100;
+    font-display: swap;
+    src: url("/fonts/poppins-100-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 100;
+    font-display: swap;
+    src: url("/fonts/poppins-100-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/poppins-400-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/poppins-400-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("/fonts/poppins-500-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("/fonts/poppins-500-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/poppins-700-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/poppins-700-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* The cover's gradient plate. */
 .title {
-    background: linear-gradient(to bottom, var(--color-main) 10%, white 90%);
+    background: linear-gradient(to bottom, var(--color-main) 10%, var(--color-surface) 90%);
 }
 
-#app {
-    background-color: white;
-}
-
-html, body, #top {
-    margin: 0;
-    padding: 0;
-    background-color: black;
-    font-size: 3vw;
-
-    --color-text: rgb(61, 64, 67);
-    --color-main: #0f15fd;
-    --primary: #0f15fd;
-}
-
-#progression {
-    background-color: #0f15fdd !important;
-}
-blockquote {
-    border-inline-start-color: var(--color-main) !important;
-}
-
-.xsmall-height {
-    block-size: 25rem !important;
-}
-.xsmall-width {
-    inline-size: 25rem !important;
-}
-
-blockquote h5 {
-    font-size: 2.1rem;
-}
-
-html {
-    width: 100%;
-    height: 100%;
-}
-
-.xlarge-text {
-    font-size: 1.6rem !important;
-    line-height: normal;
-}
-.xlarge-height {
-    block-size: 64rem !important;
-}
-@media screen and (max-height: 1024px) {
-    .xlarge-height {
-        block-size: 45rem !important;
-    }
-}
-
-.full-width {
-    inline-size: 100% !important;
-    width: 100% !important;
-}
-
-body {
-    /*font-family: 'Poppins';font-size: 22px;*/
-    color: var(--color-text);
-    display: flex;
-    align-items: center;
-    height: 100%;
-}
-
-header {
-    background-color: transparent !important;
-    color: var(--color-main);
-    border-bottom: solid 1px var(--color-main);
-}
-#top {
-    position: relative;
-    background-color: white;
-    width: 100%;
-    height: calc(100vw * 9 / 16);
-    overflow: hidden;
-    text-align: center;
-}
-
-.logos {
-    width: 100%;
-    height: calc(100% - 14vw);
-    text-align: center;
-}
-
-img {
-    height: 75%;
-}
-
-.logos img {
-    margin-top: 4vw;
-}
-
-a, a:visited {
-    color: var(--color-main);
-    text-decoration: none;
-}
-
-split-view {
-    height: calc(100% - 14vw);
-    padding: 0 2vw;
-}
-
+/* An emphasis in this deck means the accent colour, not italics. */
 em {
     font-style: normal;
     color: var(--color-main);
 }
 
-#progression {
-    position: absolute;
-    height: 6px;
-    /*bottom: calc((100vh - (100vw * 9 / 16)) / 2);*/
-    left: 0;
-    background-color: black;
-    border-radius: 0 3px 3px 0;
-    opacity: .4;
+a,
+a:visited {
+    color: var(--color-main);
+    text-decoration: none;
 }
 
-#qr {
-    position: absolute;
-    right: 1vw;
-    bottom: 1vw;
-    width: 15vw;
-    height: auto;
-}
-
-/* Speaker Notes window. */
-#speaker-notes {
-    display: table;
-    position: fixed;
-    width: 80%;
-    height: 80%;
-    top: 0;
-    left: 0;
-    z-index: 999;
-    background-color: #EEEE;
-    margin: 10%;
-    border: 4px solid #CCC;
-    border-radius: 2rem;
-    padding: 2vw;
-    justify-content: center;
-    align-items: center;
-}
-
-#speaker-notes-contents {
-    /*font-size: 1.5vw !important;*/
-    display: table-cell;
-    vertical-align: middle;
-    line-height: normal;
-}
-
-#speaker-notes-progress {
-    position: fixed;
-    height: 3.5vw;
-    top: 1vw;
-    left: 1vw;
-    padding: 0.5vw;
-    background-color: #7CF;
-    font-size: 3vw;
-    font-weight: bold;
-    text-align: center;
-}
-
-#current-slide-title {
-    position: fixed;
-    height: 3.5vw;
-    top: 1vw;
-    left: 12vw;
-    padding: 0.5vw;
-    background-color: black;
-    color: #DDD;
-    font-size: 3vw;
-    font-weight: bold;
-    text-align: center;
-}
-
+/* mermaid renders asynchronously; hide the source until it has. */
 .mermaid {
     visibility: hidden;
-    height: calc(100% - 14vw);
+    block-size: 100%;
 }
 
 .mermaid[data-processed="true"] {
@@ -202,141 +149,51 @@ em {
 }
 
 .mermaid svg {
-    min-width: 100%;
-    min-height: 100%;
+    min-inline-size: 100%;
+    min-block-size: 100%;
 }
 
-.main {
-    height: 100%;
+/* Speaker Notes window. */
+#speaker-notes {
+    display: table;
+    position: fixed;
+    inline-size: 80%;
+    block-size: 80%;
+    inset: 0 auto auto 0;
+    z-index: 999;
+    margin: 10%;
+    padding: 2rem;
+    border: 4px solid var(--color-outline);
+    border-radius: 2rem;
+    background-color: var(--color-surface);
+    color: var(--color-fg);
 }
 
-.main-slide {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 150px 80px 20px;
-    margin-top: 30px;
-    color: #ffffff;
-    background-image: linear-gradient(180deg, var(--color-main) 0%, #2a0a89 100%);
+#speaker-notes-contents {
+    display: table-cell;
+    vertical-align: middle;
+    line-height: normal;
 }
 
-.gb-shape-1 {
-    color: var(--base-2);
-    position: absolute;
-    overflow: hidden;
-    pointer-events: none;
-    line-height: 0;
-    left: 0;
-    right: 0;
-    top: -1px;
-    transform: scaleY(-1);
+#speaker-notes-progress,
+#current-slide-title {
+    position: fixed;
+    inset-block-start: 1rem;
+    block-size: 3.5rem;
+    padding: 0.5rem;
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
 }
 
-.poppins-thin {
-    font-family: "Poppins", sans-serif;
-    font-weight: 100;
-    font-style: normal;
+#speaker-notes-progress {
+    inset-inline-start: 1rem;
+    background-color: var(--color-main);
+    color: var(--color-surface);
 }
 
-.poppins-extralight {
-    font-family: "Poppins", sans-serif;
-    font-weight: 200;
-    font-style: normal;
-}
-
-.poppins-light {
-    font-family: "Poppins", sans-serif;
-    font-weight: 300;
-    font-style: normal;
-}
-
-.poppins-regular {
-    font-family: "Poppins", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-}
-
-.poppins-medium {
-    font-family: "Poppins", sans-serif;
-    font-weight: 500;
-    font-style: normal;
-}
-
-.poppins-semibold {
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: normal;
-}
-
-.poppins-bold {
-    font-family: "Poppins", sans-serif;
-    font-weight: 700;
-    font-style: normal;
-}
-
-.poppins-extrabold {
-    font-family: "Poppins", sans-serif;
-    font-weight: 800;
-    font-style: normal;
-}
-
-.poppins-black {
-    font-family: "Poppins", sans-serif;
-    font-weight: 900;
-    font-style: normal;
-}
-
-.poppins-thin-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 100;
-    font-style: italic;
-}
-
-.poppins-extralight-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 200;
-    font-style: italic;
-}
-
-.poppins-light-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 300;
-    font-style: italic;
-}
-
-.poppins-regular-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 400;
-    font-style: italic;
-}
-
-.poppins-medium-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 500;
-    font-style: italic;
-}
-
-.poppins-semibold-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-style: italic;
-}
-
-.poppins-bold-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 700;
-    font-style: italic;
-}
-
-.poppins-extrabold-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 800;
-    font-style: italic;
-}
-
-.poppins-black-italic {
-    font-family: "Poppins", sans-serif;
-    font-weight: 900;
-    font-style: italic;
+#current-slide-title {
+    inset-inline-start: 12rem;
+    background-color: var(--color-fg);
+    color: var(--color-surface);
 }
