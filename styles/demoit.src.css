@@ -78,8 +78,11 @@ meant before. In @layer base, so a utility on a slide still wins.
 
     /* beercss restored native list rendering with `:not(nav) > :is(ul,ol)
        { all: revert }`. `all` would revert the colours too and break the dark
-       theme, so only the three properties that matter are restored. */
-    main :is(ul, ol) {
+       theme, so only the three properties that matter are restored -- but the
+       selector shape is kept: scoping it to `main` instead would leave the
+       lists of an HTML deck that has no <main>, sample/'s included, with no
+       markers at all. */
+    :not(nav) > :is(ul, ol) {
         margin-block: 1rem;
         padding-inline-start: 2.5rem;
         list-style: revert;

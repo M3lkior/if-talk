@@ -315,7 +315,7 @@
     margin-block: .5rem;
   }
 
-  main :is(ul, ol) {
+  :not(nav) > :is(ul, ol) {
     list-style: revert;
     margin-block: 1rem;
     padding-inline-start: 2.5rem;
