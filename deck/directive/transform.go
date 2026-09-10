@@ -25,12 +25,13 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
-// columnCount is the width of the beercss grid a split{cols=} lays panes out
-// on: a weight outside 1..12 has no matching "sN" class.
+// columnCount is the width of the grid a split{cols=} lays panes out on: a
+// weight outside 1..12 has no matching "col-span-N" utility.
 const columnCount = 12
 
 // transformer rewrites a split directive that carries column weights into a
-// beercss grid, and reports directives whose name is not in the catalogue.
+// twelve-column grid, and reports directives whose name is not in the
+// catalogue.
 type transformer struct {
 	ctx parser.Context
 }
@@ -83,28 +84,28 @@ func (t *transformer) toGrid(node *Node) {
 		return
 	}
 
-	// A weight becomes a beercss "sN" class verbatim, and beercss has twelve
+	// A weight becomes a "col-span-N" utility verbatim, and the grid has twelve
 	// columns. Anything else — `cols=a,b`, `cols=13,4` — is a class no
 	// stylesheet defines, so the pane silently takes the whole row on stage
 	// and nothing says why.
 	for _, weight := range cols {
 		if width, err := strconv.Atoi(weight); err != nil || width < 1 || width > columnCount {
-			addError(t.ctx, node.Line, "the split directive has the column weight %q: beercss has %d columns, so every weight is a whole number from 1 to %d", weight, columnCount, columnCount)
+			addError(t.ctx, node.Line, "the split directive has the column weight %q: the grid has %d columns, so every weight is a whole number from 1 to %d", weight, columnCount, columnCount)
 
 			return
 		}
 	}
 
-	class := "grid"
+	class := "grid grid-cols-12 gap-4"
 	if height := node.Attrs["height"]; height != "" {
-		class += " " + height + "-height"
+		class += " " + stageHeightClass(height)
 	}
 
 	node.Name = "grid"
 	node.Attrs = map[string]string{"class": class}
 
 	for i, child := range children {
-		column := NewNode("col", map[string]string{"class": "s" + cols[i]}, node.FenceLength, node.Line)
+		column := NewNode("col", map[string]string{"class": "col-span-" + cols[i]}, node.FenceLength, node.Line)
 		node.ReplaceChild(node, child, column)
 		column.AppendChild(column, child)
 	}

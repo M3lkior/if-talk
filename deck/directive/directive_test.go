@@ -109,6 +109,10 @@ func TestUnclosedContainerIsReported(t *testing.T) {
 	}
 }
 
+// The height name travels verbatim into a Tailwind height utility --
+// h-stage-xlarge, not h-stage-xl -- because a deck writes `height: xlarge` and
+// deck/layouts/split.html interpolates that value as-is. The author-facing API
+// is what it always was.
 func TestSplitCarriesItsHeightAsAClass(t *testing.T) {
 	t.Parallel()
 
@@ -117,8 +121,24 @@ func TestSplitCarriesItsHeightAsAClass(t *testing.T) {
 	if len(errs) != 0 {
 		t.Fatalf("got errors %v, want none", errs)
 	}
-	if want := `<split-view class="xlarge-height">`; !strings.Contains(got, want) {
+	if want := `<split-view class="h-stage-xlarge">`; !strings.Contains(got, want) {
 		t.Fatalf("got %q, want it to contain %q", got, want)
+	}
+}
+
+// A split with no height carries no class at all: the layout's own default
+// applies, and an empty class attribute would override nothing while looking
+// like it does.
+func TestSplitWithoutHeightCarriesNoClass(t *testing.T) {
+	t.Parallel()
+
+	got, errs := render(t, ":::split\n::term{path=sources}\n:::\n")
+
+	if len(errs) != 0 {
+		t.Fatalf("got errors %v, want none", errs)
+	}
+	if want := "<split-view>"; !strings.Contains(got, want) {
+		t.Fatalf("got %q, want a bare %q", got, want)
 	}
 }
 
