@@ -95,8 +95,12 @@ meant before. In @layer base, so a utility on a slide still wins.
     /* Tailwind's preflight makes images block-level. Every deck here was
        written against inline images: that is what let `text-align: center` on
        a slide centre a photo, and what made a `<div><img/></div>` pair sit on
-       one line. Blocks would silently left-align every image in the repo. */
-    :is(img, svg, video) {
+       one line. Blocks would silently left-align every image in the repo.
+
+       svg is deliberately left out: mermaid renders one and sizes the diagram
+       to its container, so changing that container's layout box changes the
+       diagram. Only raster images needed this. */
+    :is(img, video) {
         display: inline-block;
         vertical-align: middle;
     }
@@ -131,6 +135,7 @@ geometry value, so a profile cannot break a layout.
     --dm-tab-fg: #000000;
     --dm-code-fg: #212121;
     --dm-code-selection: #bfd6ff;
+
 }
 
 :root[data-display="tv"] {

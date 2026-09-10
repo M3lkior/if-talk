@@ -780,26 +780,17 @@ customElements.define('vs-code', VSCode);
 // Diagrams
 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
 
-// startOnLoad is off so that the first render and every re-render go through
-// the same path, with the theme resolved at that moment.
-function renderMermaid() {
-    const dark = document.documentElement.classList.contains('dark');
-    mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
-
-    // A render replaces the element's content with the SVG, so a re-render
-    // needs the original source put back as well as the processed marker
-    // cleared -- otherwise mermaid is handed its own output to parse.
-    document.querySelectorAll('.mermaid, pre.mermaid').forEach(node => {
-        if (node.dataset.source === undefined) {
-            node.dataset.source = node.textContent;
-        } else {
-            node.textContent = node.dataset.source;
-        }
-        delete node.dataset.processed;
-    });
-
-    mermaid.run();
-}
-
-renderMermaid();
-document.addEventListener('demoit:theme', renderMermaid);
+// Left exactly as it was, and the diagram keeps mermaid's light theme in both
+// modes. On a dark slide it gets a light ground of its own instead -- see
+// `.dark .mermaid` in this talk's style.css.
+//
+// KNOWN GAP: this deck's block-beta figure has its labels clipped on a dark
+// slide, and only there. mermaid sizes each node from a width it measures and
+// then paints a wider label into it. What was tried and did not move it:
+// mermaid's own `dark` theme, `base` driven from the deck's tokens, pinning
+// fontFamily and fontSize, pinning them in themeVariables too, block padding,
+// and deferring the render until the webfont was loaded. What did matter was
+// unrelated and is fixed: a `display: inline-block` on `svg` in the chassis
+// was compressing the container mermaid measures, which clipped the figure in
+// *both* modes.
+mermaid.initialize({ startOnLoad: true });

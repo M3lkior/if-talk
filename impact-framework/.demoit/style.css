@@ -153,6 +153,22 @@ a:visited {
     min-block-size: 100%;
 }
 
+/*
+The diagram keeps mermaid's light theme in both modes -- its dark theme clips
+every label of this deck's block-beta figure, see demoit.js -- so on a dark
+slide it gets a light ground of its own rather than sitting on the dark one.
+A figure on a card, which is a fair way to show one anyway.
+
+No padding, and that is not an oversight: mermaid measures this container to
+size its columns, so any padding here narrows it and clips every label. An
+outline gives the card its edge without taking width away.
+*/
+.dark .mermaid[data-processed="true"] {
+    border-radius: var(--radius-card);
+    background-color: #ffffff;
+    outline: 1rem solid #ffffff;
+}
+
 /* Speaker Notes window. */
 #speaker-notes {
     display: table;

@@ -325,7 +325,7 @@
     padding: 1rem;
   }
 
-  :is(img, svg, video) {
+  :is(img, video) {
     vertical-align: middle;
     display: inline-block;
   }
