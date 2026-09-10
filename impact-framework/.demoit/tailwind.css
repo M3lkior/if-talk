@@ -195,6 +195,10 @@
     height: calc(var(--spacing, .25rem) * 12);
   }
 
+  .h-48 {
+    height: calc(var(--spacing, .25rem) * 48);
+  }
+
   .h-\[25rem\] {
     height: 25rem;
   }
