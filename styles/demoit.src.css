@@ -224,6 +224,16 @@ body {
     background-color: var(--color-surface);
 }
 
+/*
+Set by demoit.js on the panes of a slide while another one is maximised.
+
+visibility rather than display: display:none would tear a tty or a code-server
+iframe down and bring it back empty, losing whatever the speaker had typed.
+*/
+[data-demoit-hidden] {
+    visibility: hidden;
+}
+
 #progression {
     position: absolute;
     inset-block-end: 0;

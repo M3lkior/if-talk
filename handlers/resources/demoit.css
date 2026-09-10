@@ -663,6 +663,10 @@ body {
   inline-size: 100%;
 }
 
+[data-demoit-hidden] {
+  visibility: hidden;
+}
+
 #progression {
   background-color: var(--color-fg);
   block-size: 6px;

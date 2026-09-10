@@ -108,11 +108,13 @@ So three stylesheets load, in this order, and the order is the point: `/demoit.c
 | `<source-code folder= files= start-lines= end-lines= code_style=>` | IDE-like tabbed code viewer, chroma-highlighted; `start-lines`/`end-lines` **highlight** those lines, they don't truncate the file | `/sourceCode/...` |
 | `<vs-code path="folder">` | code-server in a Docker container | `/beta/vscode/{folder}` |
 | `<split-view>` | auto-fit grid of the above | — |
-| `<fake-window title="">` | macOS-style chrome; green dot maximizes | — |
+| `<fake-window title="">` | macOS-style chrome; green dot maximizes, Escape restores | — |
 | `<speaker-notes>` | invisible on stage; content forwarded to the notes window | — |
 | `<nav-arrows>` | also binds ArrowRight/Left, PageUp/Down, Space | — |
 
 `impact-framework/.demoit/js/demoit.js` additionally imports mermaid from a CDN, defines `<title-bar>`, computes the stage scale, and owns the theme switcher (`window.demoitTheme`). Slides are styled with [Tailwind CSS](https://tailwindcss.com/) v4 utilities plus the handful of named chassis classes below; `sample/` predates that and leans on its own `style.css`.
+
+**Maximising a window hides the slide's other panes.** The green dot puts the window `position: fixed` with a `z-index`, which used to resolve against the viewport. The stage is a transformed, clipped box, so it now resolves *inside* the stage instead — two shadow roots below a grid item — and a sibling terminal iframe kept painting over a maximised browser. `demoit.js` therefore hides the other panes outright on a `demoit:maximize` event, which is both deterministic and what maximising is for. It hides them with `visibility`, never `display`: `display: none` would tear a tty or code-server iframe down and bring it back empty, losing whatever the speaker had typed mid-demo.
 
 **Terminals are a reverse-proxied gotty.** `shell.ListenAndServe` runs a gotty server on `--shellport` bound to 127.0.0.1; `main.go` reverse-proxies `/tty` to it. `handlers/shell.go` doesn't render anything — it builds a `cd <folder>; source .demoit/.bashrc; HISTFILE=<copy> exec $SHELL` command line and 303-redirects to `/tty?arg=...`. So **`.demoit/.bashrc` and `.demoit/.bash_history` are how you pre-seed a demo terminal** (history is copied to a temp file first so the demo doesn't mutate the repo).
 

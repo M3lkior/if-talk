@@ -126,15 +126,20 @@ class FakeWindow extends BaseHTMLElement {
             margin-top: 5px;
         }
         
+        /* --elevate2, --on-surface, --surface-container-high and --surface were
+           beercss's, and beercss is gone: this window had no background and no
+           shadow at all, so a maximised browser was see-through. The chassis
+           tokens replace them, and they cross the shadow boundary the way a
+           class never could. */
         .dialog {
             display: block;
             border: none;
             opacity: 0;
             visibility: hidden;
             position: fixed;
-            box-shadow: var(--elevate2);
-            color: var(--on-surface);
-            background-color: var(--surface-container-high);
+            box-shadow: 0 0.25em 0.9em -0.1em rgba(0, 0, 0, .4);
+            color: var(--color-fg);
+            background-color: var(--dm-window-bg, #fff);
             padding-top: 1.5rem;
             z-index: 100;
             inset: 10% auto auto 50%;
@@ -143,7 +148,7 @@ class FakeWindow extends BaseHTMLElement {
             max-block-size: 80%;
             overflow-x: hidden;
             overflow-y: auto;
-            transition: all var(--speed3), 0s background-color;
+            transition: opacity .3s, visibility .3s;
             transform: translate(-50%, -4rem);
             outline: none;
         }
@@ -157,14 +162,17 @@ class FakeWindow extends BaseHTMLElement {
           transform: translate(-50%, 0);
         }
         
+        /* Fills the stage exactly. The old 95% height and 4rem offset were cut
+           for beercss's dialog chrome, and on a fixed stage they just left a
+           strip of the slide showing through under the window. */
         .dialog.max {
-             inset: 0 auto auto 0;
+            inset: 0;
             inline-size: 100%;
-            block-size: 95%;
+            block-size: 100%;
             max-inline-size: 100%;
             max-block-size: 100%;
-            transform: translateY(4rem);
-            background-color: var(--surface);
+            padding-top: 2.1em;
+            background-color: var(--dm-window-bg, #fff);
         }
         
          #url.dialog {
@@ -192,23 +200,66 @@ class FakeWindow extends BaseHTMLElement {
     connectedCallback() {
         super.connectedCallback();
         let toggleWindow = () => {
-            document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    // Action to be executed when the Escape key is pressed
-                    toggleWindow()
-                }
-            });
             this.$('#main').classList.toggle('dialog')
             this.$('#main').classList.toggle('main')
             this.$('#main').classList.toggle('max')
             this.$('#main').classList.toggle('active')
             this.$('#url').classList.toggle('dialog')
+
+            // composed, so the event escapes this shadow root and the one of
+            // whichever component owns this window. The listener below needs
+            // that path to tell which pane was maximised.
+            this.dispatchEvent(new CustomEvent('demoit:maximize', {
+                bubbles: true,
+                composed: true,
+                detail: { maximized: this.$('#main').classList.contains('dialog') },
+            }));
         };
         this.$('#green').addEventListener('click', toggleWindow);
+
+        // Registered once, and only acts on a window that is actually
+        // maximised. It used to be registered inside toggleWindow, so every
+        // maximise added another listener and after three of them one Escape
+        // toggled three times.
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && this.$('#main').classList.contains('dialog')) {
+                toggleWindow();
+            }
+        });
     }
 }
 
 customElements.define('fake-window', FakeWindow);
+
+// The panes a slide can put side by side. Anything that owns a fake-window and
+// sits in a split.
+const PANE_TAGS = ['WEB-TERM', 'WEB-BROWSER', 'VS-CODE', 'SOURCE-CODE'];
+
+// Maximising a window hides the other panes of the slide.
+//
+// Stacking alone did not do it. The window goes position:fixed with a
+// z-index, which used to resolve against the viewport; the stage is a
+// transformed, clipped box, so it now resolves inside the stage instead, two
+// shadow roots below a grid item -- and a sibling terminal iframe kept
+// painting over the maximised browser. Hiding the siblings outright is both
+// deterministic and what maximising is *for*.
+//
+// visibility, not display: display:none would tear the tty iframe down and
+// restore it empty, losing whatever the speaker had typed mid-demo.
+document.addEventListener('demoit:maximize', event => {
+    const pane = event.composedPath().find(
+        node => node instanceof Element && PANE_TAGS.includes(node.tagName));
+
+    if (!pane) {
+        return;
+    }
+
+    document.querySelectorAll(PANE_TAGS.join(',')).forEach(other => {
+        if (other !== pane) {
+            other.toggleAttribute('data-demoit-hidden', event.detail.maximized);
+        }
+    });
+});
 
 class SourceCode extends BaseHTMLElement {
     static get styles() {
