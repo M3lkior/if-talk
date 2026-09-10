@@ -42,6 +42,27 @@ sudo install demoit /usr/local/bin/demoit
 To have a correct display in the web terminal, it's better to install the font `Inconsolata for Powerline` on your computer.
 This font can be found [here](https://github.com/powerline/fonts/tree/master/Inconsolata).
 
+### Run this fork from sources
+
+The released binary above predates Markdown support. To run the version in this repo — the one that reads `demoit.md` — build it and point it at a talk folder:
+
+```bash
+go build -o demoit .              # deps are vendored, no network needed
+./demoit --dev impact-framework
+```
+
+Then browse to http://localhost:8888.
+
+The argument is the presentation folder and defaults to `.`. The flags worth knowing:
+
+ + `--dev` — reload the browser whenever a file changes. This is the loop you write slides in.
+ + `--locale en` — load `demoit-en.md`, or `demoit-en.html`, instead of the default deck.
+ + `--port 8080` — serve somewhere other than 8888.
+ + `--host 0.0.0.0` — listen on every interface rather than localhost only. A deck renders with raw HTML passed straight through, so only do this on a network you trust.
+ + `--shellport 9999` — move the gotty server that the embedded terminals are proxied to.
+
+The engine carries a Go test suite, run with `go test ./...`. It says nothing about what a browser actually paints, so a change to a layout, to CSS or to the index template still needs `--dev` and a look at the slides.
+
 ## Get started from a Sample
 
 ```bash
