@@ -108,6 +108,9 @@ class FakeWindow extends BaseHTMLElement {
             background-color: var(--dm-window-bg, #fff);
         }
 
+        /* nowrap and hidden together: the bar has a fixed height, so anything
+           that does not fit used to wrap onto a second line and sit over the
+           page. Now it is simply cut off at the edge. */
         #bar {
             display: block;
             box-sizing: border-box;
@@ -116,6 +119,8 @@ class FakeWindow extends BaseHTMLElement {
             top: 0;
             padding: 0.3em;
             width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
             background: var(--dm-chrome-bg, linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%));
             border-bottom: 2px solid var(--dm-chrome-border, #cbcbcb);
             border-radius: 0.4em 0.4em 0 0;
@@ -131,7 +136,8 @@ class FakeWindow extends BaseHTMLElement {
             font-size: 0.75em;
             display: inline-block;
             height: 1.6em;
-            width: calc(100% - 6em);
+            /* 6em of traffic lights plus the zoom controls next to them. */
+            width: calc(100% - 11em);
             padding: 0.4em 0.4em 0 0.4em;
             color: black;
             text-align: left;
@@ -155,6 +161,50 @@ class FakeWindow extends BaseHTMLElement {
         #red {background-color: rgb(255, 90, 82);}
         #yellow {background-color: rgb(230, 192, 41);}
         #green {background-color: rgb(82, 194, 43);}
+
+        /* Zoom controls live in the window chrome because nothing else can
+           reach these panes: mouse and keyboard events over an iframe go to
+           the iframe's document, and code-server is on another port while an
+           embedded site is on another domain, so neither a wheel gesture nor a
+           shortcut can be captured from the slide. */
+        #zoom {
+            display: inline-block;
+            margin-left: 0.4em;
+            font-size: 0.7em;
+            font-family: sans-serif;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        #zoom button {
+            width: 1.6em;
+            height: 1.6em;
+            padding: 0;
+            border: none;
+            border-radius: 0.3em;
+            background: rgba(0, 0, 0, .07);
+            color: var(--dm-tab-fg, #000);
+            font: inherit;
+            line-height: 1.5em;
+            cursor: pointer;
+        }
+
+        #zoom button:hover {
+            background: rgba(0, 0, 0, .16);
+        }
+
+        /* No reserved width: at 100% the label is empty and must take no room
+           at all, or it pushes the url bar off the end of the chrome. */
+        #zoom-level {
+            display: inline-block;
+            color: var(--dm-tab-fg, #000);
+            text-align: center;
+            opacity: .75;
+        }
+
+        #zoom-level:not(:empty) {
+            padding: 0 0.3em;
+        }
 
         #main:not(:first-of-type) {
             margin-top: 5px;
@@ -217,6 +267,12 @@ class FakeWindow extends BaseHTMLElement {
        `;
     }
 
+    // Shows the level in the bar, and only when it is not 100%: a readout that
+    // is always there is noise on a slide.
+    showZoom(zoom) {
+        this.$('#zoom-level').textContent = zoom === 1 ? '' : `${Math.round(zoom * 100)}%`;
+    }
+
     render() {
         this.title = this.getAttribute('title') || '';
 
@@ -224,6 +280,7 @@ class FakeWindow extends BaseHTMLElement {
         <div id="main" class="main">
             <div id="bar">
                 <i id="red"></i><i id="yellow"></i><i id="green"></i>
+                <span id="zoom"><button id="zoom-out" title="Zoom out">&minus;</button><span id="zoom-level"></span><button id="zoom-in" title="Zoom in">+</button></span>
                 ${this.title ? `<span id="title">${this.title}</span>` : ''}
                 <slot name="bar" id="url"></slot>
             </div>
@@ -251,6 +308,18 @@ class FakeWindow extends BaseHTMLElement {
         };
         this.$('#green').addEventListener('click', toggleWindow);
 
+        // The zoom itself is applied by the document listener below, which is
+        // the only place that knows which pane a window belongs to.
+        const zoomBy = step => this.dispatchEvent(new CustomEvent('demoit:zoom', {
+            bubbles: true,
+            composed: true,
+            detail: { step },
+        }));
+
+        this.$('#zoom-out').addEventListener('click', () => zoomBy(-1));
+        this.$('#zoom-in').addEventListener('click', () => zoomBy(1));
+
+
         // Registered once, and only acts on a window that is actually
         // maximised. It used to be registered inside toggleWindow, so every
         // maximise added another listener and after three of them one Escape
@@ -268,6 +337,40 @@ customElements.define('fake-window', FakeWindow);
 // The panes a slide can put side by side. Anything that owns a fake-window and
 // sits in a split.
 const PANE_TAGS = ['WEB-TERM', 'WEB-BROWSER', 'VS-CODE', 'SOURCE-CODE'];
+
+// Zoom levels a pane steps through. Multiplicative, so each press feels like
+// the same amount of change whichever end you are at.
+const ZOOM_STEPS = [0.5, 0.67, 0.8, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+
+// Each window zooms on its own.
+//
+// --pane-zoom is set on the fake-window element, and the content it frames --
+// an iframe, or the code viewer's container -- is a DOM child of it, so the
+// property inherits straight through the shadow boundary that a class could
+// never cross. Each component then divides its own width and height by the
+// zoom and applies `zoom` for the same factor: the box keeps its size on the
+// slide and only the content grows, which is what zooming a pane meant before
+// the stage existed.
+//
+// `zoom` rather than a transform, deliberately: it re-lays-out the content at
+// the new scale instead of rasterising and stretching it, so a terminal
+// reflows its columns and stays crisp.
+document.addEventListener('demoit:zoom', event => {
+    const frame = event.composedPath().find(
+        node => node instanceof Element && node.tagName === 'FAKE-WINDOW');
+
+    if (!frame) {
+        return;
+    }
+
+    const current = Number(frame.style.getPropertyValue('--pane-zoom')) || 1;
+    const at = ZOOM_STEPS.indexOf(current);
+    const from = at === -1 ? ZOOM_STEPS.indexOf(1) : at;
+    const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, Math.max(0, from + event.detail.step))];
+
+    frame.style.setProperty('--pane-zoom', next);
+    frame.showZoom(next);
+});
 
 // Maximising a window hides the other panes of the slide.
 //
@@ -318,7 +421,7 @@ class SourceCode extends BaseHTMLElement {
             padding: 0;
             padding-bottom: 0px;
             margin: 0;
-            font-size: var(--source-code-font-size, 16px);
+            font-size: calc(var(--source-code-font-size, 16px) * var(--pane-zoom, 1));
             font-family: 'Roboto Mono', monospace;
         }
 
@@ -443,7 +546,8 @@ class WebBrowser extends BaseHTMLElement {
             font-size: 0.75em;
             vertical-align: top;
             height: 1.6em;
-            width: calc(100% - 10em);
+            /* 10em of window chrome plus the zoom controls beside it. */
+            width: calc(100% - 14em);
             border: 0.1em solid #E1E1E1;
             border-radius: 0.25em;
             margin: 0.1em;
@@ -468,10 +572,15 @@ class WebBrowser extends BaseHTMLElement {
             border-radius: 4px;
         }
 
+        /* The frame keeps its size on the slide and only its content grows:
+           under the zoom property a percentage size still resolves against the
+           un-zoomed parent, so the box stays put while everything inside is
+           scaled. See demoit:zoom. */
         iframe {
             width: 100%;
             height: calc(100% + 1px);
             border: none;
+            zoom: var(--pane-zoom, 1);
         }`;
     }
 
@@ -552,10 +661,15 @@ class WebTerm extends BaseHTMLElement {
             margin-top: 5px;
         }
 
+        /* Divided by the zoom and scaled back up by it, so the tty keeps its
+           place on the slide and only its text grows -- and because the zoom
+           property re-lays-out rather than stretching, xterm reflows its
+           columns to the new size instead of blurring. */
         iframe {
             width: calc(100% + 1px);
             height: calc(100% + 1px);
             border: none;
+            zoom: var(--pane-zoom, 1);
             background-color: rgb(10,39,50);
         }
 
@@ -851,10 +965,15 @@ if (typeof ThemeEnabled !== 'undefined' && ThemeEnabled) {
 class VSCode extends BaseHTMLElement {
     static get styles() {
         return `
+        /* The frame keeps its size on the slide and only its content grows:
+           under the zoom property a percentage size still resolves against the
+           un-zoomed parent, so the box stays put while everything inside is
+           scaled. See demoit:zoom. */
         iframe {
             width: 100%;
             height: calc(100% + 1px);
             border: none;
+            zoom: var(--pane-zoom, 1);
         }`;
     }
 
