@@ -64,14 +64,14 @@ class FakeWindow extends BaseHTMLElement {
             font-size: 18px;
             padding: 2.1em 0 0 0;
             border-radius: 0.4em;
-            background: #ddd;
+            background: var(--dm-window-bg, #fff);
             display: inline-block;
             position: relative;
             overflow: hidden;
             box-shadow: 0 0.25em 0.9em -0.1em rgba(0,0,0,.2);
             width: 100%;
             height: calc(100% - 40px);
-            background-color: white;
+            background-color: var(--dm-window-bg, #fff);
         }
 
         #bar {
@@ -82,8 +82,8 @@ class FakeWindow extends BaseHTMLElement {
             top: 0;
             padding: 0.3em;
             width: 100%;
-            background: linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%);
-            border-bottom: 2px solid #cbcbcb;
+            background: var(--dm-chrome-bg, linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%));
+            border-bottom: 2px solid var(--dm-chrome-border, #cbcbcb);
             border-radius: 0.4em 0.4em 0 0;
         }
         
@@ -221,7 +221,7 @@ class SourceCode extends BaseHTMLElement {
 
         .chroma {
             text-align: left;
-            color: #212121;
+            color: var(--dm-code-fg, #212121);
             padding: 0;
             padding-bottom: 0px;
             margin: 0;
@@ -238,8 +238,8 @@ class SourceCode extends BaseHTMLElement {
         }
 
         #tabs {
-            background-color: rgb(243, 243, 243);
-            border-bottom: 1.5px solid rgb(236, 236, 236);
+            background-color: var(--dm-tabs-bg, #f3f3f3);
+            border-bottom: 1.5px solid var(--dm-tab-bg, #ececec);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -251,9 +251,9 @@ class SourceCode extends BaseHTMLElement {
             display: inline-block;
             line-height: 42px;
             padding: 0 15px 0 20px;
-            background: rgb(236, 236, 236);
+            background: var(--dm-tab-bg, #ececec);
             text-decoration: none !important;
-            color: black;
+            color: var(--dm-tab-fg, #000);
             font-size: 0.9em;
             font-family: sans-serif;
         }
@@ -269,11 +269,11 @@ class SourceCode extends BaseHTMLElement {
         }
 
         #tabs a.selected {
-            background: white;
+            background: var(--dm-window-bg, #fff);
         }
 
         #source {
-            --default-color-selection: rgb(191, 214, 255);
+            --default-color-selection: var(--dm-code-selection, #bfd6ff);
         }
 
         .hl {
@@ -281,12 +281,20 @@ class SourceCode extends BaseHTMLElement {
         }`;
     }
 
+    // The chroma style is resolved per request rather than read once, so that
+    // a theme switch is a re-fetch. /sourceCode ships its own stylesheet with
+    // the HTML (html.Standalone(true) in handlers/code.go), so there is nothing
+    // to restyle here -- the new theme arrives with the markup.
+    currentStyle() {
+        if (document.documentElement.classList.contains('dark')) {
+            return this.getAttribute('code_style_dark') || 'github-dark';
+        }
+
+        return this.getAttribute('code_style') || 'vs';
+    }
+
     render() {
         this.folder = this.getAttribute('folder');
-        this.code_style = this.getAttribute('code_style');
-        if (this.code_style === null) {
-            this.code_style = 'vs';
-        }
         this.hash = this.getAttribute('hash');
         if (this.hash === null) {
             this.hash = '';
@@ -300,7 +308,7 @@ class SourceCode extends BaseHTMLElement {
             <div id="tabs">
             ${this.files.map((file, i) => `<a class="${(i == 0) ? 'selected' : ''}" href="#">${file}<span class="close">x</span></a>`).join('')}
             </div>
-            <div id="container" class="large-height">
+            <div id="container">
                 <div id="source"></div>
             </div>
         </fake-window>`;
@@ -308,17 +316,23 @@ class SourceCode extends BaseHTMLElement {
 
     connectedCallback() {
         super.connectedCallback();
+        this.current = 0;
         this.showCurrentTab(0);
         this.$$('a').forEach((link, index) => link.addEventListener('click', () => {
             this.showCurrentTab(index);
         }));
+
+        // A class on documentElement does not cross the shadow boundary, so
+        // the component is told rather than left to observe.
+        document.addEventListener('demoit:theme', () => this.showCurrentTab(this.current));
     }
 
     async showCurrentTab(current) {
+        this.current = current;
         const file = this.files[current];
         const startLines = this.startLines[current];
         const endLines = this.endLines[current];
-        const url = `/sourceCode/${this.folder}/${file}?hash=${this.hash}&style=${this.code_style}&startLine=${startLines}&endLine=${endLines}`;
+        const url = `/sourceCode/${this.folder}/${file}?hash=${this.hash}&style=${this.currentStyle()}&startLine=${startLines}&endLine=${endLines}`;
 
         const response = await fetch(url);
         this.$('#source').innerHTML = await response.text();
@@ -576,40 +590,54 @@ customElements.define('nav-arrows', NavArrows);
 
 
 class TitleBar extends BaseHTMLElement {
+    // This component used to carry beercss classes -- max, center-left, grid,
+    // s6, circle, transparent, responsive -- inside its shadow root, where a
+    // page's stylesheet has never reached. None of them did anything, so its
+    // header rendered unstyled. The chassis cannot reach in either: only
+    // custom properties cross the boundary, so slide-header's rules are
+    // restated here, reading the same tokens.
     static get styles() {
-        return ``
+        return `
+        header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-inline: 1rem;
+            color: var(--color-main);
+            border-block-end: var(--rule, 1px) solid var(--color-main);
+        }
+
+        h5 {
+            flex: 1;
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 400;
+            text-align: start;
+        }
+
+        img {
+            block-size: 3rem;
+            inline-size: 3rem;
+            border-radius: 9999px;
+            object-fit: cover;
+        }`
     }
 
     render() {
-        // this.title = this.getAttribute('title');
-
         return `
             <header>
-                <nav>
-                    <h5 class="max center-left">
-                        <slot></slot>
-                    </h5>
-                    <div class="grid center-right">
-                        <div class="circle transparent s6">
-                            <img class="responsive" src="/images/zatsit_logo.svg">
-                        </div>
-                        <div class="circle transparent s6">
-                            <img class="responsive" src="/images/cloud_nord2.png">
-                        </div>
-                    </div>
-                </nav>
-            </header>
-            `;
+                <h5><slot></slot></h5>
+                <div>
+                    <img src="/images/zatsit_logo.svg">
+                    <img src="/images/cloud_nord2.png">
+                </div>
+            </header>`;
     }
 
-    connectedCallback() {
-        super.connectedCallback();
-        const div = document.createElement('div');
-        div.innerHTML = `${this.render()}`;
-        const window = this.shadowRoot.appendChild(div.lastChild);
-
-
-    }
+    // No connectedCallback override on purpose. The one that used to be here
+    // called render() a second time and appended the result on top of what
+    // BaseHTMLElement had already built, so every title-bar rendered its title
+    // twice.
 }
 customElements.define('title-bar', TitleBar);
 
@@ -751,4 +779,27 @@ customElements.define('vs-code', VSCode);
 
 // Diagrams
 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
-mermaid.initialize({ startOnLoad: true });
+
+// startOnLoad is off so that the first render and every re-render go through
+// the same path, with the theme resolved at that moment.
+function renderMermaid() {
+    const dark = document.documentElement.classList.contains('dark');
+    mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default' });
+
+    // A render replaces the element's content with the SVG, so a re-render
+    // needs the original source put back as well as the processed marker
+    // cleared -- otherwise mermaid is handed its own output to parse.
+    document.querySelectorAll('.mermaid, pre.mermaid').forEach(node => {
+        if (node.dataset.source === undefined) {
+            node.dataset.source = node.textContent;
+        } else {
+            node.textContent = node.dataset.source;
+        }
+        delete node.dataset.processed;
+    });
+
+    mermaid.run();
+}
+
+renderMermaid();
+document.addEventListener('demoit:theme', renderMermaid);
