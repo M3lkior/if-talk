@@ -47,6 +47,11 @@ type Page struct {
 	CurrentStep int
 	StepCount   int
 	DevMode     bool
+	// Stage and Dark come from the talk's .demoit/talk.yml theme block. They
+	// gate the fixed stage and the theme switcher, so a talk that declares
+	// neither renders exactly as it did before the chassis existed.
+	Stage bool
+	Dark  bool
 }
 
 // Step renders a given page.
@@ -97,6 +102,14 @@ func readSteps(folder string) ([]Page, error) {
 		return nil, err
 	}
 
+	// The talk is read again here rather than threaded out of deck.Load, which
+	// returns rendered slides only. It is the same file deck.Load already read,
+	// and a missing talk.yml is not an error.
+	talk, err := deck.LoadTalk(folder)
+	if err != nil {
+		return nil, err
+	}
+
 	steps := make([]Page, 0, len(rendered))
 	for i, html := range rendered {
 		url := "/"
@@ -110,6 +123,8 @@ func readSteps(folder string) ([]Page, error) {
 			DevMode:     *flags.DevMode,
 			CurrentStep: i,
 			URL:         url,
+			Stage:       talk.Theme.Stage,
+			Dark:        talk.Theme.Dark,
 		})
 	}
 

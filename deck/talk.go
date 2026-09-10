@@ -27,6 +27,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Theme says which parts of the rendering chassis a talk opts into. Both
+// fields default to false, and that default matters: a talk that declares no
+// theme block keeps the full-window rendering it has today and gets no theme
+// switcher, which is what leaves an older talk untouched by the chassis.
+type Theme struct {
+	// Stage puts the slides on the fixed 1920x1080 stage, scaled to fit.
+	Stage bool `yaml:"stage"`
+	// Dark renders the theme switcher and lets the dark palette apply.
+	Dark bool `yaml:"dark"`
+}
+
 // Talk is the identity of a presentation, shared by all its localized decks.
 // It is read once from <folder>/.demoit/talk.yml and handed to every layout.
 type Talk struct {
@@ -39,6 +50,8 @@ type Talk struct {
 	Logos []string `yaml:"logos"`
 	// Footer is the text layouts may display at the bottom of a slide.
 	Footer string `yaml:"footer"`
+	// Theme is the rendering chassis the talk opts into.
+	Theme Theme `yaml:"theme"`
 }
 
 // LoadTalk reads <folder>/.demoit/talk.yml. A missing file is not an error: it
