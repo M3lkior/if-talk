@@ -22,13 +22,47 @@ limitations under the License.
 // deliberate: it keeps the tty iframe 1920 logical pixels wide, so xterm.js
 // always measures the same grid and a demo does not reflow according to the
 // room it is shown in.
+// Browser zoom has to keep working, and the naive fit silently killed it.
+//
+// A page zoom of Z shrinks innerWidth in CSS pixels by exactly Z, so a scale
+// computed from innerWidth alone shrinks the stage by the very amount the zoom
+// grew it. The two cancel, and because the transform applies to everything
+// inside the stage -- the tty and the embedded pages included -- nothing ever
+// got bigger. Cmd+ looked like it did nothing at all.
+//
+// Multiplying the fit by the zoom factor takes the stage out of that loop: the
+// fit is measured against the window as it was at 100%, so a zoom then does
+// what a zoom should. devicePixelRatio is the only handle a page has on the
+// zoom level; it also changes when the window moves to a display of a
+// different density, in which case this baseline is stale until a reload.
+const baseDevicePixelRatio = window.devicePixelRatio || 1;
+
+function browserZoom() {
+    return (window.devicePixelRatio || 1) / baseDevicePixelRatio;
+}
+
 function fitStage() {
     if (!document.querySelector('.stage')) {
         return;
     }
 
-    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    document.documentElement.style.setProperty('--stage-scale', scale);
+    const zoom = browserZoom();
+    const scale = Math.min(
+        (window.innerWidth * zoom) / 1920,
+        (window.innerHeight * zoom) / 1080,
+    );
+
+    // Centred by offset rather than by a percentage translation, so that the
+    // overflow a zoom creates all lands right and down where the document can
+    // scroll to it. Clamped at 0: when the stage is larger than the window
+    // there is nothing to centre, only something to scroll.
+    const offsetX = Math.max(0, (window.innerWidth - 1920 * scale) / 2);
+    const offsetY = Math.max(0, (window.innerHeight - 1080 * scale) / 2);
+
+    const root = document.documentElement.style;
+    root.setProperty('--stage-scale', scale);
+    root.setProperty('--stage-x', `${offsetX}px`);
+    root.setProperty('--stage-y', `${offsetY}px`);
 }
 
 window.addEventListener('resize', fitStage);

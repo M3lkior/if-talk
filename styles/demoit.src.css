@@ -203,14 +203,24 @@ body {
     font-weight: var(--weight-body);
 }
 
+/*
+Anchored top-left and centred by a translation demoit.js computes, rather than
+centred with translate(-50%, -50%).
+
+The difference only shows under browser zoom, and it matters there: a
+percentage translation puts half the overflow above and left of the viewport,
+where nothing can scroll to it, so zooming in cropped the slide unreachably.
+Origin at 0 0 with a non-negative offset sends all the overflow right and down,
+which the document can scroll.
+*/
 .stage {
     position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 50%;
+    inset-block-start: 0;
+    inset-inline-start: 0;
     inline-size: 1920px;
     block-size: 1080px;
-    transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
-    transform-origin: center;
+    transform: translate(var(--stage-x, 0px), var(--stage-y, 0px)) scale(var(--stage-scale, 1));
+    transform-origin: 0 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;

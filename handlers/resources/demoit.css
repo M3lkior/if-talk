@@ -646,14 +646,14 @@ body {
 .stage {
   block-size: 1080px;
   inline-size: 1920px;
-  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
-  transform-origin: center;
+  transform: translate(var(--stage-x, 0px), var(--stage-y, 0px)) scale(var(--stage-scale, 1));
+  transform-origin: 0 0;
   background-color: var(--color-surface);
   flex-direction: column;
   display: flex;
   position: absolute;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
+  inset-block-start: 0;
+  inset-inline-start: 0;
   overflow: hidden;
 }
 
