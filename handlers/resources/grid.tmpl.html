@@ -3,7 +3,26 @@
 	<head>
 		<meta charset="utf-8">
 		<title>All pages</title>
+		<link rel="stylesheet" href="/demoit.css?hash={{ engineHash }}">
+		<script>
+			// The slide iframes are same-origin and read this themselves; this is
+			// for the grid page's own chrome around them.
+			(function () {
+				try {
+					if (localStorage.getItem('demoit_theme') === 'dark') {
+						document.documentElement.classList.add('dark');
+					}
+					document.documentElement.dataset.display = localStorage.getItem('demoit_display') || 'screen';
+				} catch (e) {
+					document.documentElement.dataset.display = 'screen';
+				}
+			})();
+		</script>
     <style>
+			body {
+				background-color: var(--color-surface);
+				color: var(--color-fg);
+			}
 			.cell {
 				display: inline-block;
 				overflow: hidden;
@@ -15,7 +34,7 @@
 			}
 			.thumb {
 				height: 270px;
-				border: 1px solid #BBB;
+				border: 1px solid var(--color-outline);
 			}
       .thumb iframe {
 				width: 1920px;

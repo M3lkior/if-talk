@@ -3,7 +3,24 @@
   <head>
     <meta charset="utf-8">
     <title>Notes</title>
-		<link rel="stylesheet" href="/style.css?hash={{ "style.css" | hash }}">
+		<link rel="stylesheet" href="/demoit.css?hash={{ engineHash }}">
+		{{ with "style.css" | hash }}<link rel="stylesheet" href="/style.css?hash={{ . }}">
+		{{ end }}<script>
+			// Same origin as the presentation window, so the theme it remembered
+			// is readable here. Before the first paint: the notes window is open
+			// on the speaker's own screen for the whole talk, and a white flash
+			// there is as unwelcome as one on stage.
+			(function () {
+				try {
+					if (localStorage.getItem('demoit_theme') === 'dark') {
+						document.documentElement.classList.add('dark');
+					}
+					document.documentElement.dataset.display = localStorage.getItem('demoit_display') || 'screen';
+				} catch (e) {
+					document.documentElement.dataset.display = 'screen';
+				}
+			})();
+		</script>
   </head>
   <body>
     <div id="speaker-notes-progress"></div>
@@ -29,6 +46,19 @@
 
     channel.onmessage = function(e) {
       console.debug("Received ", e.data);
+      if(e.data.hasOwnProperty("theme") ) {
+        // The presentation window switched theme or display profile. Both
+        // windows must follow, or the speaker reads white notes next to a dark
+        // stage.
+        document.documentElement.classList.toggle('dark', e.data.theme === 'dark');
+        document.documentElement.dataset.display = e.data.display || 'screen';
+        try {
+          localStorage.setItem('demoit_theme', e.data.theme);
+          localStorage.setItem('demoit_display', e.data.display || 'screen');
+        } catch (err) {
+          // Nothing to remember is better than nothing to render.
+        }
+      }
       if(e.data.hasOwnProperty("currentSlideId") ) {
         currentSlideId = e.data.currentSlideId;
         if(e.data.stepCount) {
