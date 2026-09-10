@@ -108,7 +108,9 @@ A directive takes the whole line. Anything left on it after the name and the `{�
 
 **Other routes:** `/grid` renders every step as an iframe (also warms the browser cache so slide transitions don't lag); `/pdf` drives headless Chrome via chromedp at 1920x1080@2x, 4 parallel tabs, into a gofpdf document; `/qrcode?url=` returns a PNG; `/last` redirects to the final slide.
 
-**VS Code is opt-in and heavy.** `vscode/server.go` pulls a pinned `codercom/code-server` image and starts container `demoit-vscode` once (`sync.Once`), bind-mounting the presentation folder at `/app` on port 18080. Requires a working Docker daemon; failures are logged, not fatal.
+**VS Code is opt-in and heavy.** `vscode/server.go` pulls a pinned `codercom/code-server` image and starts container `demoit-vscode`, bind-mounting the presentation folder at `/app` on port 18080. Requires a working Docker daemon; a failure is a 503 on the slide, not a fatal error. `vscode.Plan` refuses to take over a container another demoit is using for a different folder, so the single shared container name and port can't be stolen mid-talk.
+
+**The container's VS Code settings are demoit's, not the speaker's** (`vscode/settings.go`). VS Code Web keeps its *layout* in the browser (IndexedDB on `localhost:18080`), not in the container — there is no `state.vscdb` to inspect — so a stray Cmd+K Z left Zen Mode restored on every later load: no file tree, no activity bar, no status bar, and nothing in the deck to explain it. `CopyUserSettings` therefore writes `.local/share/code-server/User/settings.json` into the container between create and start (a tar through `CopyToContainer`, carrying its own directory entries so Docker doesn't create them as root), with `zenMode.restore: false` and `workbench.startupEditor: "none"`. Settings are copied **on create only**: a container being reused keeps the ones it was born with, so a container created by an older demoit needs a `docker rm -f demoit-vscode` to pick them up.
 
 ## Conventions
 

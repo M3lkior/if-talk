@@ -29,7 +29,13 @@ import (
 // VSCode redirects to the url of a VSCode session running
 // with https://github.com/cdr/code-server.
 func VSCode(w http.ResponseWriter, r *http.Request) {
-	vscode.Start()
+	// Report why VS Code is unavailable instead of redirecting to a container
+	// that is not there: the slide used to show an empty editor with the reason
+	// nowhere but the server log, or — worse — another demoit's files.
+	if err := vscode.Start(); err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
 
 	vsCodeURL := localURL(r, vscode.Port, nil)
 
