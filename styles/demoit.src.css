@@ -1,0 +1,166 @@
+/*
+Build entry of the engine stylesheet. Output: handlers/resources/demoit.css,
+committed and embedded in the binary.
+
+Scanned sources are the engine's own embedded templates. A talk's slides are
+scanned by its own build (hack/css.sh <talk>), because a released binary has
+neither deck/layouts nor handlers/resources on disk.
+*/
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@import "./tokens.css";
+@import "./components.css";
+
+/*
+`source(none)` above turns off Tailwind's automatic source detection, which
+would otherwise scan the whole repository on top of the @source directives
+below -- talk folders included. That is not a size concern but a correctness
+one: the engine sheet would then carry a talk's classes, and the separation
+this two-sheet design rests on would exist only on paper.
+
+Globs, not directories: `@source "../handlers/resources/"` would scan
+demoit.css -- this build's own output -- and feed every class name in it back
+in as a candidate.
+*/
+@source "../handlers/resources/*.tmpl.html";
+@source "../deck/layouts/*.html";
+
+/*
+The chassis ships from the engine unconditionally rather than only when a
+scanned template happens to use it. Two reasons: a talk that overrides a layout
+should not have to re-emit the chassis from its own sheet, and an @utility is
+otherwise emitted only where it is seen -- so reordering a layout could silently
+drop one.
+*/
+@source inline("slide-main slide-header slide-footer slide-prose contact-row card");
+
+/*
+deck/directive builds these class names in Go (transform.go toGrid, render.go
+splitAttributes), so no scanner will ever meet them in a source file. Without
+these two lines the panes of every split{cols=} slide silently take the whole
+row on stage, with nothing saying why -- the same failure mode transform.go
+already documents for a weight outside 1..12.
+*/
+@source inline("col-span-{1,2,3,4,5,6,7,8,9,10,11,12}");
+@source inline("h-stage-{small,medium,large,xlarge}");
+
+/*
+Legibility tokens. A display profile redefines these and only these: never a
+geometry value, so a profile cannot break a layout.
+*/
+:root {
+    --rule: 1px;
+    --rule-opacity: 0.4;
+    --weight-body: 400;
+    --weight-thin: 100;
+
+    /* Component chrome. Custom properties cross the shadow DOM; classes do not. */
+    --dm-window-bg: #ffffff;
+    --dm-chrome-bg: linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%);
+    --dm-chrome-border: #cbcbcb;
+    --dm-tabs-bg: #f3f3f3;
+    --dm-tab-bg: #ececec;
+    --dm-tab-fg: #000000;
+    --dm-code-fg: #212121;
+    --dm-code-selection: #bfd6ff;
+}
+
+:root[data-display="tv"] {
+    --rule: 1.5px;
+    --rule-opacity: 0.7;
+    --weight-body: 500;
+    --weight-thin: 300;
+    --color-fg: #2a2d30;
+}
+
+:root[data-display="projector"] {
+    --rule: 2px;
+    --rule-opacity: 1;
+    --weight-body: 500;
+    --weight-thin: 400;
+    --color-fg: #000000;
+    --color-fg-muted: #2a2d30;
+}
+
+.dark {
+    --color-fg: #e6e1e6;
+    --color-fg-muted: #b4b0b6;
+    --color-surface: #16171a;
+    --color-outline: #3a3d42;
+    --color-main: var(--color-main-dark);
+
+    --dm-window-bg: #1c1d21;
+    --dm-chrome-bg: linear-gradient(to bottom, #2b2d33 0%, #23252a 100%);
+    --dm-chrome-border: #3a3d42;
+    --dm-tabs-bg: #23252a;
+    --dm-tab-bg: #2b2d33;
+    --dm-tab-fg: #e6e1e6;
+    --dm-code-fg: #e6e1e6;
+    --dm-code-selection: #2f4a7a;
+}
+
+/*
+The stage. 1920x1080 is not a new convention: /pdf already renders at
+1920x1080@2x (handlers/pdf.go) and /grid already iframes at 1920x1080
+(grid.tmpl.html), while style.css mixed rem, px and vw and beercss switched
+columns on width thresholds. Pinning the stage makes the geometry the same on
+every 16:9 screen and letterboxes the rest.
+
+--stage-scale is set by demoit.js on resize: dividing a length by a length in
+calc() is specified but not yet implemented in browsers.
+
+The stage also retires the vw units style.css was full of: a
+`calc(100% - 14vw)` on split-view used to measure the window and now measures
+the stage, which is a constant.
+*/
+html {
+    /*
+    No font-size here on purpose: 16px is both the value already in effect and
+    Tailwind's preflight default, so every rem in a deck keeps its length.
+    */
+    background-color: var(--color-void);
+}
+
+body {
+    margin: 0;
+    min-block-size: 100vh;
+    background-color: var(--color-void);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-weight: var(--weight-body);
+}
+
+.stage {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: 1920px;
+    block-size: 1080px;
+    transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+    transform-origin: center;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--color-surface);
+}
+
+/* A talk that does not opt into the stage keeps the full window, as before. */
+.no-stage {
+    inline-size: 100%;
+    min-block-size: 100vh;
+    background-color: var(--color-surface);
+}
+
+#progression {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    block-size: 6px;
+    margin: 0;
+    border-radius: 0 3px 3px 0;
+    background-color: var(--color-fg);
+    opacity: var(--rule-opacity);
+}

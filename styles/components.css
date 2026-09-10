@@ -1,0 +1,84 @@
+/*
+The chassis: the dark variant and the handful of named utilities that would
+otherwise cost a dozen classes each. Imported normally -- not by reference --
+by both the engine and each talk, so a utility is emitted wherever it is used.
+*/
+
+/*
+Class-driven, not prefers-color-scheme: the speaker switches the theme, the
+machine does not decide it.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+The slide's main area. Replaces beercss's `main.responsive`, which was
+`flex:1; padding:.5rem; overflow-x:hidden` plus `max-inline-size:75rem;
+margin:0 auto` from a second rule, narrowed again to 100% by `.max`.
+
+min-block-size:0 is what lets a pane inside it take a percentage height: a flex
+item defaults to min-content and would otherwise refuse to shrink.
+*/
+@utility slide-main {
+    flex: 1 1 0%;
+    min-block-size: 0;
+    inline-size: 100%;
+    padding-inline: 0.5rem;
+    overflow-x: hidden;
+}
+
+@utility slide-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-inline: 0.3rem;
+    color: var(--color-main);
+    border-block-end: var(--rule) solid var(--color-main);
+}
+
+@utility slide-footer {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+}
+
+/*
+beercss gave every slide its vertical rhythm through one global rule:
+
+  *+:is(address,article,blockquote,code,h1..h6,nav,ol,p,pre,section,table,ul,
+        .grid,.row,.field,.tabs,aside,fieldset,form) { margin-block-start:1rem }
+
+It is written in no slide, so nothing signals it -- and every element of every
+slide collapses together the moment beercss leaves. This is that rule, made
+explicit and scoped to a slide body.
+*/
+@utility slide-prose {
+    & > * + * {
+        margin-block-start: 1rem;
+    }
+}
+
+/*
+The "round avatar + handle" line, repeated twelve times across two slides of
+impact-framework. 3rem is the size the avatars render at today: measured on the
+pre-migration render, not guessed.
+*/
+@utility contact-row {
+    grid-column: span 4 / span 4;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-align: start;
+
+    & img {
+        block-size: 3rem;
+        inline-size: 3rem;
+        border-radius: 9999px;
+        object-fit: cover;
+    }
+}
+
+@utility card {
+    border-radius: var(--radius-card);
+    padding: 0.5rem;
+    background-color: var(--color-surface);
+}

@@ -1,0 +1,49 @@
+/*
+Design tokens of the demoit chassis.
+
+This file must contain @theme blocks and nothing else: a talk's stylesheet
+imports it with `theme(reference)` to get the vocabulary without emitting the
+variables twice, and Tailwind rejects a referenced file that carries any other
+rule.
+
+Sizes are in rem on purpose. The root font size stays at 16px -- the value
+that is already in effect, and Tailwind's own default -- so every rem in a deck
+keeps the length it has today. The `font-size: 3vw` in impact-framework's
+style.css never applied: beercss loaded after it and its own `html` rule won by
+source order.
+*/
+@theme {
+    --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Roboto Mono", ui-monospace, monospace;
+
+    /* A talk overrides --color-main in its own .demoit/tokens.css. */
+    --color-main: #0f15fd;
+    --color-main-dark: #7c81ff;
+
+    --color-fg: #3d4043;
+    --color-fg-muted: #6b7075;
+    --color-surface: #ffffff;
+    --color-outline: #d5d7da;
+
+    /* The letterbox around the stage, on screens whose aspect ratio differs. */
+    --color-void: #000000;
+
+    /*
+    Pane heights, as a share of the slide's main area rather than absolute
+    lengths. Two reasons, neither of them "the old values were absurd" -- at
+    16px/rem they were sane. First, .xlarge-height was 64rem, 1024px, for a
+    1080px stage: add a header and a footer and the pane overflows. Second, its
+    fallback came from an `@media (max-height:1024px)` query -- a question
+    about the window, which a fixed stage makes meaningless. A share of the
+    main area cannot overflow, and asks no media query.
+
+    Names match what a deck writes in frontmatter (height: xlarge), because
+    split.html interpolates that value verbatim.
+    */
+    --height-stage-small: 40%;
+    --height-stage-medium: 65%;
+    --height-stage-large: 85%;
+    --height-stage-xlarge: 100%;
+
+    --radius-card: 2rem;
+}

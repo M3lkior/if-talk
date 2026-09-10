@@ -60,6 +60,8 @@ func main() {
 	r.PathPrefix("/fonts/").HandlerFunc(handlers.Static).Methods("GET")
 	r.PathPrefix("/images/").HandlerFunc(handlers.Static).Methods("GET")
 	r.PathPrefix("/media/").HandlerFunc(handlers.Static).Methods("GET")
+	r.HandleFunc("/demoit.css", handlers.EngineCSS).Methods("GET")
+	r.HandleFunc("/tailwind.css", handlers.Static).Methods("GET")
 	r.HandleFunc("/style.css", handlers.Static).Methods("GET")
 	r.HandleFunc("/favicon.ico", handlers.Static).Methods("GET")
 	r.HandleFunc("/qrcode", handlers.QRCode).Methods("GET")
