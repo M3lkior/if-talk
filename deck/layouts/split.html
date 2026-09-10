@@ -1,5 +1,5 @@
-{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max{{ end }}">
-<split-view class="{{ .Height }}-height">
+{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main{{ end }}">
+<split-view class="h-stage-{{ .Height }}">
 {{ .Content }}
 </split-view>
 </main>

@@ -1,22 +1,12 @@
 {{/* Same fallback the embedded cover layout carries: a talk that overrides a
      layout owns its default classes too, since the engine no longer fills
-     .Class in before the template runs. */}}<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max center-align{{ end }}">
-    <div class="small-height"></div>
-
-    <div class=" medium no-padding center-align top-align">
-        <div class="padding">
+     .Class in before the template runs. */}}<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main flex flex-col items-center justify-center text-center{{ end }}">
+    <div class="card px-8 py-4">
 {{ .Content }}
-        </div>
     </div>
-    <div class="large-space"></div>
-    <div class="large-space"></div>
-    <div class="grid center-align">
-        <div class="s12 m6 l6">
-            <img class="xsmall-height xsmall-width" src="/images/logo.jpg" loading="lazy">
-        </div>
-        <div class="s12 m6 l6">
-            <img src="/images/zatsit_logo_noir.svg" class="xsmall-height xsmall-width" loading="lazy"/>
-        </div>
+    <div class="mt-12 flex items-center justify-center gap-12">
+        <img class="h-[25rem] w-[25rem] object-contain" src="/images/logo.jpg" loading="lazy">
+        <img class="h-[25rem] w-[25rem] object-contain" src="/images/zatsit_logo_noir.svg" loading="lazy"/>
     </div>
 </main>
 {{ template "notes" . }}

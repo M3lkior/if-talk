@@ -1,13 +1,9 @@
-<header>
-    <nav>
-        <h3 class="max center-left">{{ .Title }}</h3>
-        <div class="grid center-right">
-            {{ range .Talk.Logos }}<div class="circle transparent s6">
-                <img class="responsive" src="{{ . }}">
-            </div>
-            {{ end }}
-        </div>
-    </nav>
+<header class="slide-header">
+    <h3 class="flex-1 m-0 text-left">{{ .Title }}</h3>
+    <div class="flex items-center gap-4">
+        {{ range .Talk.Logos }}<img class="size-12 rounded-full object-cover" src="{{ . }}">
+        {{ end }}
+    </div>
 </header>
 {{/* slide.Class arrives empty when the slide names no class: key, so every
      layout — embedded or talk-added — carries its own fallback for that case.
@@ -15,7 +11,7 @@
      that does declare a class: key still gets it verbatim, replacing this
      fallback wholesale, the same replace semantics every other layout
      follows. */}}
-<main class="{{ if .Class }}{{ .Class }}{{ else }}main responsive large-height center-align{{ end }}">
+<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-prose flex flex-col justify-center text-center{{ end }}">
 {{ .Content }}
 </main>
 {{ template "source" . }}{{ template "notes" . }}

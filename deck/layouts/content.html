@@ -1,4 +1,4 @@
-{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max{{ end }}">
+{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-prose{{ end }}">
 {{ .Content }}
 </main>
 {{ template "source" . }}{{ template "notes" . }}

@@ -26,7 +26,7 @@ func TestLayoutsRenderTheEmbeddedDefault(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		`<h2 class="max center-left">L'impact du numérique</h2>`,
+		`<h2 class="flex-1 m-0 text-left">L'impact du numérique</h2>`,
 		`src="/images/a.svg"`,
 		`src="/images/b.jpg"`,
 		"<h2>2,5%</h2>",
@@ -63,7 +63,7 @@ func TestSplitLayoutWrapsTheContent(t *testing.T) {
 		t.Fatalf("got error %v, want none", err)
 	}
 
-	if want := `<split-view class="xlarge-height">`; !strings.Contains(string(got), want) {
+	if want := `<split-view class="h-stage-xlarge">`; !strings.Contains(string(got), want) {
 		t.Fatalf("got %q, want it to contain %q", got, want)
 	}
 }
