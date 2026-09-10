@@ -657,6 +657,12 @@ body {
   overflow: hidden;
 }
 
+.stage.stage-maximized {
+  block-size: 100vh;
+  inline-size: 100vw;
+  transform: none;
+}
+
 .no-stage {
   background-color: var(--color-surface);
   min-block-size: 100vh;

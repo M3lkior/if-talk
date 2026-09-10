@@ -293,6 +293,14 @@ document.addEventListener('demoit:maximize', event => {
             other.toggleAttribute('data-demoit-hidden', event.detail.maximized);
         }
     });
+
+    // And the stage steps aside, so the maximised window is fixed to the
+    // viewport again rather than to a 1920x1080 box that cannot grow when the
+    // speaker zooms in to read it. See .stage-maximized in demoit.css.
+    const stage = document.querySelector('.stage');
+    if (stage) {
+        stage.classList.toggle('stage-maximized', event.detail.maximized);
+    }
 });
 
 class SourceCode extends BaseHTMLElement {

@@ -227,6 +227,26 @@ which the document can scroll.
     background-color: var(--color-surface);
 }
 
+/*
+While a pane is maximised, the stage stops being a stage.
+
+A maximised window is `position: fixed`, which used to resolve against the
+viewport: it filled the screen, and a browser zoom grew its content while it
+kept filling the screen. A transform makes its ancestor the containing block
+instead, so the window became a fixed 1920x1080 box in stage coordinates --
+and zooming then grew the content inside a box that could not grow with it,
+which is where the scrollbars inside the terminal and the browser came from.
+
+`transform: none` hands the window back to the viewport, and the 100vw/100vh
+size keeps the stage covering the screen so nothing of the slide peeks out
+from behind it. demoit.js adds this class on `demoit:maximize`.
+*/
+.stage.stage-maximized {
+    inline-size: 100vw;
+    block-size: 100vh;
+    transform: none;
+}
+
 /* A talk that does not opt into the stage keeps the full window, as before. */
 .no-stage {
     inline-size: 100%;
