@@ -36,7 +36,7 @@ func TestLoadTalkReadsEveryKey(t *testing.T) {
 		t.Fatalf("got error %v, want none", err)
 	}
 
-	if got, want := talk.Title, "Impact Framework"; got != want {
+	if got, want := string(talk.Title), "Impact Framework"; got != want {
 		t.Errorf("got title %q, want %q", got, want)
 	}
 	if got, want := talk.Layout, "content"; got != want {
@@ -47,6 +47,47 @@ func TestLoadTalkReadsEveryKey(t *testing.T) {
 	}
 	if got, want := talk.Footer, "adapted from demoit"; got != want {
 		t.Errorf("got footer %q, want %q", got, want)
+	}
+}
+
+// A talk's title and subtitle go through the same Markdown pipeline as a
+// slide's title: key, and for the same reason: a cover writes
+// `*Impact Framework*` so the word takes the accent treatment, and an
+// apostrophe must not come back as an HTML entity the way html/template would
+// escape a plain string.
+func TestLoadTalkRendersTheTitleAndSubtitleAsMarkdown(t *testing.T) {
+	t.Parallel()
+
+	folder := writeTalk(t, "title: A la découverte d'*Impact Framework*.\nsubtitle: 10 avril 2025 — **Ludovic Dussart**\n")
+
+	talk, err := deck.LoadTalk(folder)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if got, want := string(talk.Title), "A la découverte d'<em>Impact Framework</em>."; got != want {
+		t.Errorf("got title %q, want %q", got, want)
+	}
+	if got, want := string(talk.Subtitle), "10 avril 2025 — <strong>Ludovic Dussart</strong>"; got != want {
+		t.Errorf("got subtitle %q, want %q", got, want)
+	}
+}
+
+// A talk with neither key renders two empty strings, not a <p></p>: that is
+// what lets a layout test them with {{ with }}.
+func TestLoadTalkLeavesAnAbsentTitleEmpty(t *testing.T) {
+	t.Parallel()
+
+	talk, err := deck.LoadTalk(writeTalk(t, "layout: content\n"))
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if talk.Title != "" {
+		t.Errorf("got title %q, want it empty", talk.Title)
+	}
+	if talk.Subtitle != "" {
+		t.Errorf("got subtitle %q, want it empty", talk.Subtitle)
 	}
 }
 

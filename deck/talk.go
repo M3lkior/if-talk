@@ -20,6 +20,7 @@ package deck
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -41,9 +42,15 @@ type Theme struct {
 // Talk is the identity of a presentation, shared by all its localized decks.
 // It is read once from <folder>/.demoit/talk.yml and handed to every layout.
 type Talk struct {
-	// Title is the talk's title, available to layouts that want a fallback
-	// when a slide declares none.
-	Title string `yaml:"title"`
+	// Title is the talk's title, rendered from talk.yml through the same
+	// Markdown pipeline as a slide's title: key -- so a cover can write
+	// `*Impact Framework*` and have the word take the accent treatment, and an
+	// apostrophe is not HTML-entity-escaped the way html/template escapes a
+	// plain string.
+	Title template.HTML `yaml:"title"`
+	// Subtitle is the line a cover displays under the title, typically the
+	// date and the speaker. Rendered as Markdown too.
+	Subtitle template.HTML `yaml:"subtitle"`
 	// Layout is the layout slides use when they declare none.
 	Layout string `yaml:"layout"`
 	// Logos are the images the header and cover layouts display, in order.
@@ -71,6 +78,23 @@ func LoadTalk(folder string) (Talk, error) {
 	if err := yaml.Unmarshal(content, &talk); err != nil {
 		return talk, fmt.Errorf("unable to parse .demoit/talk.yml: %w", err)
 	}
+
+	// Rendered after the parse rather than during it: yaml puts the raw
+	// Markdown in the field -- template.HTML has string as its underlying type
+	// -- and we replace it with its rendering. renderTitle returns the empty
+	// string untouched, so a talk that declares neither key keeps two empty
+	// fields a layout can test with {{ with }}.
+	title, _, err := renderTitle(string(talk.Title), 0)
+	if err != nil {
+		return talk, fmt.Errorf("unable to render the talk title: %w", err)
+	}
+	talk.Title = title
+
+	subtitle, _, err := renderTitle(string(talk.Subtitle), 0)
+	if err != nil {
+		return talk, fmt.Errorf("unable to render the talk subtitle: %w", err)
+	}
+	talk.Subtitle = subtitle
 
 	if talk.Layout == "" {
 		talk.Layout = "default"
