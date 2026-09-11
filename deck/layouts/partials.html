@@ -1,17 +1,35 @@
-{{ define "header" }}<header>
-    <nav>
-        <h2 class="max center-left">{{ .Title }}</h2>
-        <div class="grid center-right">
-            {{ range .Talk.Logos }}<div class="circle transparent s6">
-                <img class="responsive" src="{{ . }}">
-            </div>
-            {{ end }}
-        </div>
-    </nav>
+{{/* Shared blocks, not a layout: Layouts.Execute rejects `layout: partials`.
+
+     Three beercss classes are dropped here rather than translated, because
+     beercss defines no rule for any of them: center-left, center-right and
+     padding. They never did anything.
+
+     Two others are translated to what they actually did rather than what they
+     read like. `max` on the title resolved to `:is(nav,.row)>.max{flex:1}`
+     inside a nav, so it is flex-1. `responsive` on an img resolved to
+     `block-size:3rem; inline-size:3rem; object-fit:cover`, so the header logos
+     were cropped 3rem squares -- size-12 is that same 48px.
+
+     The <nav> is gone: beercss gave it `display:flex; align-items:center;
+     gap:1rem`, which slide-header now carries directly, and the grid wrapper
+     around the logos was never a useful grid. */}}
+{{ define "header" }}<header class="slide-header">
+    <h2 class="flex-1 m-0 text-left">{{ .Title }}</h2>
+    {{/* Both sets are emitted and CSS picks one: nothing here knows the
+         current theme, which the browser alone decides. The {{ if }} is the
+         whole mechanism -- without logosDark no conditional class is written
+         at all, so a talk that declares no dark variant renders exactly as it
+         did before the field existed. $ is the root context, the Slide, since
+         . is rebound to the current element inside a range. */}}
+    <div class="flex items-center gap-4">
+        {{ range .Talk.Logos }}<img class="size-12 rounded-full object-cover{{ if $.Talk.LogosDark }} dark:hidden{{ end }}" src="{{ . }}">
+        {{ end }}{{ range .Talk.LogosDark }}<img class="size-12 rounded-full object-cover hidden dark:block" src="{{ . }}">
+        {{ end }}
+    </div>
 </header>
 {{ end }}
 
-{{ define "source" }}{{ with .Source }}<div class="center-align middle-align">
+{{ define "source" }}{{ with .Source }}<div class="px-2 text-center text-fg-muted">
     <span>Source: {{ . }}</span>
 </div>
 {{ end }}{{ end }}

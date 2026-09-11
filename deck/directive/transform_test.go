@@ -14,9 +14,9 @@ func TestSplitWithColsRendersAWeightedGrid(t *testing.T) {
 		t.Fatalf("got errors %v, want none", errs)
 	}
 	for _, want := range []string{
-		`<div class="grid xlarge-height">`,
-		`<div class="s4">`,
-		`<div class="s8">`,
+		`<div class="grid grid-cols-12 gap-4 h-stage-xlarge">`,
+		`<div class="col-span-4">`,
+		`<div class="col-span-8">`,
 		`<web-term path="sources">`,
 		`<vs-code path="sources">`,
 	} {
@@ -32,13 +32,13 @@ func TestSplitWithColsRendersAWeightedGrid(t *testing.T) {
 	// rewires the sibling links, so collecting the children in the wrong order
 	// silently swaps the panes: the terminal would get the wide column and
 	// VS Code the narrow one, with every assertion above still passing.
-	s4 := strings.Index(got, `<div class="s4">`)
-	s8 := strings.Index(got, `<div class="s8">`)
+	narrow := strings.Index(got, `<div class="col-span-4">`)
+	wide := strings.Index(got, `<div class="col-span-8">`)
 	term := strings.Index(got, "<web-term")
 	code := strings.Index(got, "<vs-code")
 
-	if s4 > term || term > s8 || s8 > code {
-		t.Errorf("got %q, want the s4 column then the term then the s8 column then vs-code", got)
+	if narrow > term || term > wide || wide > code {
+		t.Errorf("got %q, want the col-span-4 column then the term then the col-span-8 column then vs-code", got)
 	}
 }
 
@@ -87,7 +87,7 @@ func TestGridClassIsHTMLEscaped(t *testing.T) {
 	}
 }
 
-// A weight becomes a beercss "sN" class verbatim, so anything that is not a
+// A weight becomes a "col-span-N" utility verbatim, so anything that is not a
 // whole number from 1 to 12 is a class no stylesheet defines.
 func TestSplitWithColsRejectsANonNumericWeight(t *testing.T) {
 	t.Parallel()
@@ -105,8 +105,8 @@ func TestSplitWithColsRejectsANonNumericWeight(t *testing.T) {
 			if !strings.Contains(errs[0].Message, "12") {
 				t.Errorf("got message %q, want it to name the twelve-column grid", errs[0].Message)
 			}
-			if strings.Contains(got, `class="s`) {
-				t.Errorf("got %q, want no sN column class built from a weight that is not one", got)
+			if strings.Contains(got, `class="col-span-`) {
+				t.Errorf("got %q, want no col-span class built from a weight that is not one", got)
 			}
 		})
 	}

@@ -14,6 +14,60 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// The stage is 1920x1080 CSS pixels, scaled to fit the window. Dividing a
+// length by a length in calc() is specified but not implemented in browsers,
+// so the factor is computed here.
+//
+// Scaling with transform rather than by shrinking a root font size is
+// deliberate: it keeps the tty iframe 1920 logical pixels wide, so xterm.js
+// always measures the same grid and a demo does not reflow according to the
+// room it is shown in.
+// Browser zoom has to keep working, and the naive fit silently killed it.
+//
+// A page zoom of Z shrinks innerWidth in CSS pixels by exactly Z, so a scale
+// computed from innerWidth alone shrinks the stage by the very amount the zoom
+// grew it. The two cancel, and because the transform applies to everything
+// inside the stage -- the tty and the embedded pages included -- nothing ever
+// got bigger. Cmd+ looked like it did nothing at all.
+//
+// Multiplying the fit by the zoom factor takes the stage out of that loop: the
+// fit is measured against the window as it was at 100%, so a zoom then does
+// what a zoom should. devicePixelRatio is the only handle a page has on the
+// zoom level; it also changes when the window moves to a display of a
+// different density, in which case this baseline is stale until a reload.
+const baseDevicePixelRatio = window.devicePixelRatio || 1;
+
+function browserZoom() {
+    return (window.devicePixelRatio || 1) / baseDevicePixelRatio;
+}
+
+function fitStage() {
+    if (!document.querySelector('.stage')) {
+        return;
+    }
+
+    const zoom = browserZoom();
+    const scale = Math.min(
+        (window.innerWidth * zoom) / 1920,
+        (window.innerHeight * zoom) / 1080,
+    );
+
+    // Centred by offset rather than by a percentage translation, so that the
+    // overflow a zoom creates all lands right and down where the document can
+    // scroll to it. Clamped at 0: when the stage is larger than the window
+    // there is nothing to centre, only something to scroll.
+    const offsetX = Math.max(0, (window.innerWidth - 1920 * scale) / 2);
+    const offsetY = Math.max(0, (window.innerHeight - 1080 * scale) / 2);
+
+    const root = document.documentElement.style;
+    root.setProperty('--stage-scale', scale);
+    root.setProperty('--stage-x', `${offsetX}px`);
+    root.setProperty('--stage-y', `${offsetY}px`);
+}
+
+window.addEventListener('resize', fitStage);
+fitStage();
+
 class BaseHTMLElement extends HTMLElement {
     constructor() {
         super();
@@ -44,16 +98,19 @@ class FakeWindow extends BaseHTMLElement {
             font-size: 18px;
             padding: 2.1em 0 0 0;
             border-radius: 0.4em;
-            background: #ddd;
+            background: var(--dm-window-bg, #fff);
             display: inline-block;
             position: relative;
             overflow: hidden;
             box-shadow: 0 0.25em 0.9em -0.1em rgba(0,0,0,.2);
             width: 100%;
             height: calc(100% - 40px);
-            background-color: white;
+            background-color: var(--dm-window-bg, #fff);
         }
 
+        /* nowrap and hidden together: the bar has a fixed height, so anything
+           that does not fit used to wrap onto a second line and sit over the
+           page. Now it is simply cut off at the edge. */
         #bar {
             display: block;
             box-sizing: border-box;
@@ -62,8 +119,10 @@ class FakeWindow extends BaseHTMLElement {
             top: 0;
             padding: 0.3em;
             width: 100%;
-            background: linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%);
-            border-bottom: 2px solid #cbcbcb;
+            white-space: nowrap;
+            overflow: hidden;
+            background: var(--dm-chrome-bg, linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%));
+            border-bottom: 2px solid var(--dm-chrome-border, #cbcbcb);
             border-radius: 0.4em 0.4em 0 0;
         }
         
@@ -77,7 +136,8 @@ class FakeWindow extends BaseHTMLElement {
             font-size: 0.75em;
             display: inline-block;
             height: 1.6em;
-            width: calc(100% - 6em);
+            /* 6em of traffic lights plus the zoom controls next to them. */
+            width: calc(100% - 11em);
             padding: 0.4em 0.4em 0 0.4em;
             color: black;
             text-align: left;
@@ -102,19 +162,68 @@ class FakeWindow extends BaseHTMLElement {
         #yellow {background-color: rgb(230, 192, 41);}
         #green {background-color: rgb(82, 194, 43);}
 
+        /* Zoom controls live in the window chrome because nothing else can
+           reach these panes: mouse and keyboard events over an iframe go to
+           the iframe's document, and code-server is on another port while an
+           embedded site is on another domain, so neither a wheel gesture nor a
+           shortcut can be captured from the slide. */
+        #zoom {
+            display: inline-block;
+            margin-left: 0.4em;
+            font-size: 0.7em;
+            font-family: sans-serif;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        #zoom button {
+            width: 1.6em;
+            height: 1.6em;
+            padding: 0;
+            border: none;
+            border-radius: 0.3em;
+            background: rgba(0, 0, 0, .07);
+            color: var(--dm-tab-fg, #000);
+            font: inherit;
+            line-height: 1.5em;
+            cursor: pointer;
+        }
+
+        #zoom button:hover {
+            background: rgba(0, 0, 0, .16);
+        }
+
+        /* No reserved width: at 100% the label is empty and must take no room
+           at all, or it pushes the url bar off the end of the chrome. */
+        #zoom-level {
+            display: inline-block;
+            color: var(--dm-tab-fg, #000);
+            text-align: center;
+            opacity: .75;
+        }
+
+        #zoom-level:not(:empty) {
+            padding: 0 0.3em;
+        }
+
         #main:not(:first-of-type) {
             margin-top: 5px;
         }
         
+        /* --elevate2, --on-surface, --surface-container-high and --surface were
+           beercss's, and beercss is gone: this window had no background and no
+           shadow at all, so a maximised browser was see-through. The chassis
+           tokens replace them, and they cross the shadow boundary the way a
+           class never could. */
         .dialog {
             display: block;
             border: none;
             opacity: 0;
             visibility: hidden;
             position: fixed;
-            box-shadow: var(--elevate2);
-            color: var(--on-surface);
-            background-color: var(--surface-container-high);
+            box-shadow: 0 0.25em 0.9em -0.1em rgba(0, 0, 0, .4);
+            color: var(--color-fg);
+            background-color: var(--dm-window-bg, #fff);
             padding-top: 1.5rem;
             z-index: 100;
             inset: 10% auto auto 50%;
@@ -123,7 +232,7 @@ class FakeWindow extends BaseHTMLElement {
             max-block-size: 80%;
             overflow-x: hidden;
             overflow-y: auto;
-            transition: all var(--speed3), 0s background-color;
+            transition: opacity .3s, visibility .3s;
             transform: translate(-50%, -4rem);
             outline: none;
         }
@@ -137,14 +246,17 @@ class FakeWindow extends BaseHTMLElement {
           transform: translate(-50%, 0);
         }
         
+        /* Fills the stage exactly. The old 95% height and 4rem offset were cut
+           for beercss's dialog chrome, and on a fixed stage they just left a
+           strip of the slide showing through under the window. */
         .dialog.max {
-             inset: 0 auto auto 0;
+            inset: 0;
             inline-size: 100%;
-            block-size: 95%;
+            block-size: 100%;
             max-inline-size: 100%;
             max-block-size: 100%;
-            transform: translateY(4rem);
-            background-color: var(--surface);
+            padding-top: 2.1em;
+            background-color: var(--dm-window-bg, #fff);
         }
         
          #url.dialog {
@@ -155,6 +267,12 @@ class FakeWindow extends BaseHTMLElement {
        `;
     }
 
+    // Shows the level in the bar, and only when it is not 100%: a readout that
+    // is always there is noise on a slide.
+    showZoom(zoom) {
+        this.$('#zoom-level').textContent = zoom === 1 ? '' : `${Math.round(zoom * 100)}%`;
+    }
+
     render() {
         this.title = this.getAttribute('title') || '';
 
@@ -162,6 +280,7 @@ class FakeWindow extends BaseHTMLElement {
         <div id="main" class="main">
             <div id="bar">
                 <i id="red"></i><i id="yellow"></i><i id="green"></i>
+                <span id="zoom"><button id="zoom-out" title="Zoom out">&minus;</button><span id="zoom-level"></span><button id="zoom-in" title="Zoom in">+</button></span>
                 ${this.title ? `<span id="title">${this.title}</span>` : ''}
                 <slot name="bar" id="url"></slot>
             </div>
@@ -172,23 +291,120 @@ class FakeWindow extends BaseHTMLElement {
     connectedCallback() {
         super.connectedCallback();
         let toggleWindow = () => {
-            document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    // Action to be executed when the Escape key is pressed
-                    toggleWindow()
-                }
-            });
             this.$('#main').classList.toggle('dialog')
             this.$('#main').classList.toggle('main')
             this.$('#main').classList.toggle('max')
             this.$('#main').classList.toggle('active')
             this.$('#url').classList.toggle('dialog')
+
+            // composed, so the event escapes this shadow root and the one of
+            // whichever component owns this window. The listener below needs
+            // that path to tell which pane was maximised.
+            this.dispatchEvent(new CustomEvent('demoit:maximize', {
+                bubbles: true,
+                composed: true,
+                detail: { maximized: this.$('#main').classList.contains('dialog') },
+            }));
         };
         this.$('#green').addEventListener('click', toggleWindow);
+
+        // The zoom itself is applied by the document listener below, which is
+        // the only place that knows which pane a window belongs to.
+        const zoomBy = step => this.dispatchEvent(new CustomEvent('demoit:zoom', {
+            bubbles: true,
+            composed: true,
+            detail: { step },
+        }));
+
+        this.$('#zoom-out').addEventListener('click', () => zoomBy(-1));
+        this.$('#zoom-in').addEventListener('click', () => zoomBy(1));
+
+
+        // Registered once, and only acts on a window that is actually
+        // maximised. It used to be registered inside toggleWindow, so every
+        // maximise added another listener and after three of them one Escape
+        // toggled three times.
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && this.$('#main').classList.contains('dialog')) {
+                toggleWindow();
+            }
+        });
     }
 }
 
 customElements.define('fake-window', FakeWindow);
+
+// The panes a slide can put side by side. Anything that owns a fake-window and
+// sits in a split.
+const PANE_TAGS = ['WEB-TERM', 'WEB-BROWSER', 'VS-CODE', 'SOURCE-CODE'];
+
+// Zoom levels a pane steps through. Multiplicative, so each press feels like
+// the same amount of change whichever end you are at.
+const ZOOM_STEPS = [0.5, 0.67, 0.8, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+
+// Each window zooms on its own.
+//
+// --pane-zoom is set on the fake-window element, and the content it frames --
+// an iframe, or the code viewer's container -- is a DOM child of it, so the
+// property inherits straight through the shadow boundary that a class could
+// never cross. Each component then divides its own width and height by the
+// zoom and applies `zoom` for the same factor: the box keeps its size on the
+// slide and only the content grows, which is what zooming a pane meant before
+// the stage existed.
+//
+// `zoom` rather than a transform, deliberately: it re-lays-out the content at
+// the new scale instead of rasterising and stretching it, so a terminal
+// reflows its columns and stays crisp.
+document.addEventListener('demoit:zoom', event => {
+    const frame = event.composedPath().find(
+        node => node instanceof Element && node.tagName === 'FAKE-WINDOW');
+
+    if (!frame) {
+        return;
+    }
+
+    const current = Number(frame.style.getPropertyValue('--pane-zoom')) || 1;
+    const at = ZOOM_STEPS.indexOf(current);
+    const from = at === -1 ? ZOOM_STEPS.indexOf(1) : at;
+    const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, Math.max(0, from + event.detail.step))];
+
+    frame.style.setProperty('--pane-zoom', next);
+    frame.showZoom(next);
+});
+
+// Maximising a window hides the other panes of the slide.
+//
+// Stacking alone did not do it. The window goes position:fixed with a
+// z-index, which used to resolve against the viewport; the stage is a
+// transformed, clipped box, so it now resolves inside the stage instead, two
+// shadow roots below a grid item -- and a sibling terminal iframe kept
+// painting over the maximised browser. Hiding the siblings outright is both
+// deterministic and what maximising is *for*.
+//
+// visibility, not display: display:none would tear the tty iframe down and
+// restore it empty, losing whatever the speaker had typed mid-demo.
+document.addEventListener('demoit:maximize', event => {
+    const pane = event.composedPath().find(
+        node => node instanceof Element && PANE_TAGS.includes(node.tagName));
+
+    if (!pane) {
+        return;
+    }
+
+    document.querySelectorAll(PANE_TAGS.join(',')).forEach(other => {
+        if (other !== pane) {
+            other.toggleAttribute('data-demoit-hidden', event.detail.maximized);
+        }
+    });
+
+    // And the stage steps aside, so the maximised window is fixed to the
+    // viewport again rather than to a 1920x1080 box that cannot grow when the
+    // speaker zooms in to read it. See .stage-maximized in demoit.css.
+    const stage = document.querySelector('.stage');
+    if (stage) {
+        stage.classList.toggle('stage-maximized', event.detail.maximized);
+    }
+});
 
 class SourceCode extends BaseHTMLElement {
     static get styles() {
@@ -201,11 +417,11 @@ class SourceCode extends BaseHTMLElement {
 
         .chroma {
             text-align: left;
-            color: #212121;
+            color: var(--dm-code-fg, #212121);
             padding: 0;
             padding-bottom: 0px;
             margin: 0;
-            font-size: var(--source-code-font-size, 16px);
+            font-size: calc(var(--source-code-font-size, 16px) * var(--pane-zoom, 1));
             font-family: 'Roboto Mono', monospace;
         }
 
@@ -218,8 +434,8 @@ class SourceCode extends BaseHTMLElement {
         }
 
         #tabs {
-            background-color: rgb(243, 243, 243);
-            border-bottom: 1.5px solid rgb(236, 236, 236);
+            background-color: var(--dm-tabs-bg, #f3f3f3);
+            border-bottom: 1.5px solid var(--dm-tab-bg, #ececec);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -231,9 +447,9 @@ class SourceCode extends BaseHTMLElement {
             display: inline-block;
             line-height: 42px;
             padding: 0 15px 0 20px;
-            background: rgb(236, 236, 236);
+            background: var(--dm-tab-bg, #ececec);
             text-decoration: none !important;
-            color: black;
+            color: var(--dm-tab-fg, #000);
             font-size: 0.9em;
             font-family: sans-serif;
         }
@@ -249,11 +465,11 @@ class SourceCode extends BaseHTMLElement {
         }
 
         #tabs a.selected {
-            background: white;
+            background: var(--dm-window-bg, #fff);
         }
 
         #source {
-            --default-color-selection: rgb(191, 214, 255);
+            --default-color-selection: var(--dm-code-selection, #bfd6ff);
         }
 
         .hl {
@@ -261,12 +477,20 @@ class SourceCode extends BaseHTMLElement {
         }`;
     }
 
+    // The chroma style is resolved per request rather than read once, so that
+    // a theme switch is a re-fetch. /sourceCode ships its own stylesheet with
+    // the HTML (html.Standalone(true) in handlers/code.go), so there is nothing
+    // to restyle here -- the new theme arrives with the markup.
+    currentStyle() {
+        if (document.documentElement.classList.contains('dark')) {
+            return this.getAttribute('code_style_dark') || 'github-dark';
+        }
+
+        return this.getAttribute('code_style') || 'vs';
+    }
+
     render() {
         this.folder = this.getAttribute('folder');
-        this.code_style = this.getAttribute('code_style');
-        if (this.code_style === null) {
-            this.code_style = 'vs';
-        }
         this.hash = this.getAttribute('hash');
         if (this.hash === null) {
             this.hash = '';
@@ -280,7 +504,7 @@ class SourceCode extends BaseHTMLElement {
             <div id="tabs">
             ${this.files.map((file, i) => `<a class="${(i == 0) ? 'selected' : ''}" href="#">${file}<span class="close">x</span></a>`).join('')}
             </div>
-            <div id="container" class="large-height">
+            <div id="container">
                 <div id="source"></div>
             </div>
         </fake-window>`;
@@ -288,17 +512,23 @@ class SourceCode extends BaseHTMLElement {
 
     connectedCallback() {
         super.connectedCallback();
+        this.current = 0;
         this.showCurrentTab(0);
         this.$$('a').forEach((link, index) => link.addEventListener('click', () => {
             this.showCurrentTab(index);
         }));
+
+        // A class on documentElement does not cross the shadow boundary, so
+        // the component is told rather than left to observe.
+        document.addEventListener('demoit:theme', () => this.showCurrentTab(this.current));
     }
 
     async showCurrentTab(current) {
+        this.current = current;
         const file = this.files[current];
         const startLines = this.startLines[current];
         const endLines = this.endLines[current];
-        const url = `/sourceCode/${this.folder}/${file}?hash=${this.hash}&style=${this.code_style}&startLine=${startLines}&endLine=${endLines}`;
+        const url = `/sourceCode/${this.folder}/${file}?hash=${this.hash}&style=${this.currentStyle()}&startLine=${startLines}&endLine=${endLines}`;
 
         const response = await fetch(url);
         this.$('#source').innerHTML = await response.text();
@@ -316,7 +546,8 @@ class WebBrowser extends BaseHTMLElement {
             font-size: 0.75em;
             vertical-align: top;
             height: 1.6em;
-            width: calc(100% - 10em);
+            /* 10em of window chrome plus the zoom controls beside it. */
+            width: calc(100% - 14em);
             border: 0.1em solid #E1E1E1;
             border-radius: 0.25em;
             margin: 0.1em;
@@ -341,10 +572,15 @@ class WebBrowser extends BaseHTMLElement {
             border-radius: 4px;
         }
 
+        /* The frame keeps its size on the slide and only its content grows:
+           under the zoom property a percentage size still resolves against the
+           un-zoomed parent, so the box stays put while everything inside is
+           scaled. See demoit:zoom. */
         iframe {
             width: 100%;
             height: calc(100% + 1px);
             border: none;
+            zoom: var(--pane-zoom, 1);
         }`;
     }
 
@@ -425,10 +661,15 @@ class WebTerm extends BaseHTMLElement {
             margin-top: 5px;
         }
 
+        /* Divided by the zoom and scaled back up by it, so the tty keeps its
+           place on the slide and only its text grows -- and because the zoom
+           property re-lays-out rather than stretching, xterm reflows its
+           columns to the new size instead of blurring. */
         iframe {
             width: calc(100% + 1px);
             height: calc(100% + 1px);
             border: none;
+            zoom: var(--pane-zoom, 1);
             background-color: rgb(10,39,50);
         }
 
@@ -556,40 +797,54 @@ customElements.define('nav-arrows', NavArrows);
 
 
 class TitleBar extends BaseHTMLElement {
+    // This component used to carry beercss classes -- max, center-left, grid,
+    // s6, circle, transparent, responsive -- inside its shadow root, where a
+    // page's stylesheet has never reached. None of them did anything, so its
+    // header rendered unstyled. The chassis cannot reach in either: only
+    // custom properties cross the boundary, so slide-header's rules are
+    // restated here, reading the same tokens.
     static get styles() {
-        return ``
+        return `
+        header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-inline: 1rem;
+            color: var(--color-main);
+            border-block-end: var(--rule, 1px) solid var(--color-main);
+        }
+
+        h5 {
+            flex: 1;
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 400;
+            text-align: start;
+        }
+
+        img {
+            block-size: 3rem;
+            inline-size: 3rem;
+            border-radius: 9999px;
+            object-fit: cover;
+        }`
     }
 
     render() {
-        // this.title = this.getAttribute('title');
-
         return `
             <header>
-                <nav>
-                    <h5 class="max center-left">
-                        <slot></slot>
-                    </h5>
-                    <div class="grid center-right">
-                        <div class="circle transparent s6">
-                            <img class="responsive" src="/images/zatsit_logo.svg">
-                        </div>
-                        <div class="circle transparent s6">
-                            <img class="responsive" src="/images/cloud_nord2.png">
-                        </div>
-                    </div>
-                </nav>
-            </header>
-            `;
+                <h5><slot></slot></h5>
+                <div>
+                    <img src="/images/zatsit_logo.svg">
+                    <img src="/images/cloud_nord2.png">
+                </div>
+            </header>`;
     }
 
-    connectedCallback() {
-        super.connectedCallback();
-        const div = document.createElement('div');
-        div.innerHTML = `${this.render()}`;
-        const window = this.shadowRoot.appendChild(div.lastChild);
-
-
-    }
+    // No connectedCallback override on purpose. The one that used to be here
+    // called render() a second time and appended the result on top of what
+    // BaseHTMLElement had already built, so every title-bar rendered its title
+    // twice.
 }
 customElements.define('title-bar', TitleBar);
 
@@ -629,6 +884,11 @@ channel.onmessage = function(e) {
         return;
     }
 
+    if(e.data.hasOwnProperty("theme") ) {
+        // Another window switched the theme or the display profile.
+        demoitTheme.apply(e.data.theme, e.data.display || demoitTheme.profile());
+    }
+
     if(e.data.hasOwnProperty("destinationSlideId") ) {
         // The Speaker notes window received a slide change event, and forwards it to
         // the Main presentation window.
@@ -637,13 +897,83 @@ channel.onmessage = function(e) {
     }
 }
 
+const DISPLAY_PROFILES = ['screen', 'tv', 'projector'];
+
+// Theme and display profile live on documentElement, are remembered per
+// browser, and are broadcast so that the speaker-notes window and /grid follow
+// rather than staying white while the stage goes dark. The inline script in
+// index.tmpl.html reads them back before the first paint, which is what keeps a
+// navigation from flashing.
+//
+// A display profile only ever changes legibility -- contrast, font weight, rule
+// thickness. Never geometry: that is what makes it safe to switch on stage.
+const demoitTheme = {
+    get() {
+        return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    },
+
+    profile() {
+        return document.documentElement.dataset.display || 'screen';
+    },
+
+    // apply sets the state without broadcasting it, so that a window reacting
+    // to a message does not echo it back.
+    apply(theme, display) {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.dataset.display = display;
+        try {
+            localStorage.setItem('demoit_theme', theme);
+            localStorage.setItem('demoit_display', display);
+        } catch (e) {
+            // Nothing to remember is better than nothing to render.
+        }
+        // The components live in shadow roots and cannot see a class on
+        // documentElement change; this is how they learn.
+        document.dispatchEvent(new CustomEvent('demoit:theme', { detail: { theme, display } }));
+    },
+
+    set(theme, display) {
+        this.apply(theme, display);
+        channel.postMessage({ theme, display });
+    },
+
+    toggle() {
+        this.set(this.get() === 'dark' ? 'light' : 'dark', this.profile());
+    },
+
+    cycleProfile() {
+        const at = DISPLAY_PROFILES.indexOf(this.profile());
+        this.set(this.get(), DISPLAY_PROFILES[(at + 1) % DISPLAY_PROFILES.length]);
+    },
+};
+
+window.demoitTheme = demoitTheme;
+
+if (typeof ThemeEnabled !== 'undefined' && ThemeEnabled) {
+    document.addEventListener('keydown', event => {
+        // nav-arrows already binds the arrows, PageUp/PageDown and space, so t
+        // and d are free.
+        if (event.key === 't') {
+            demoitTheme.toggle();
+        }
+        if (event.key === 'd') {
+            demoitTheme.cycleProfile();
+        }
+    });
+}
+
 class VSCode extends BaseHTMLElement {
     static get styles() {
         return `
+        /* The frame keeps its size on the slide and only its content grows:
+           under the zoom property a percentage size still resolves against the
+           un-zoomed parent, so the box stays put while everything inside is
+           scaled. See demoit:zoom. */
         iframe {
             width: 100%;
             height: calc(100% + 1px);
             border: none;
+            zoom: var(--pane-zoom, 1);
         }`;
     }
 
@@ -661,4 +991,59 @@ customElements.define('vs-code', VSCode);
 
 // Diagrams
 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
-mermaid.initialize({ startOnLoad: true });
+
+// The diagram keeps mermaid's light theme in both modes. On a dark slide it
+// gets a light ground of its own instead -- see `.dark .mermaid` in this talk's
+// style.css. mermaid's own dark theme sizes this figure's nodes narrower than
+// the labels it paints into them, and a legible light figure beats a clipped
+// dark one.
+//
+// Rendering waits for Poppins because mermaid sizes each node from a width it
+// measures, so measuring with the fallback font and painting Poppins clips the
+// label. document.fonts.ready is not enough on its own -- it resolves once
+// *pending* loads settle, and a face nothing has laid out yet is not pending.
+// A missing Font Loading API must not mean no diagram, hence the fallback.
+//
+// KNOWN DEFECT, and it is this one figure only: its node labels are still
+// clipped on the right. The pre-migration render was not, and one intermediate
+// build during the migration was not either, but the state that produced it
+// could not be reconstructed by bisection. What was tried and ruled out, each
+// measured on a deterministic render: mermaid's `dark` and `base` themes,
+// `base` driven from the deck's own tokens, pinning fontFamily and fontSize
+// (also inside themeVariables), block padding, a local-only font stack for
+// `.mermaid`, rendering immediately versus after the font, keeping or dropping
+// the source-restore loop, and the `.dark .mermaid` rule below.
+//
+// One real cause was found and fixed on the way: a `display: inline-block` on
+// `svg` in the chassis compressed the container mermaid measures and clipped
+// the figure in both themes. See styles/demoit.src.css, which now restores
+// inline images for img and video only. Do not put padding on `.mermaid`
+// either, for the same reason.
+function renderMermaid() {
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // A render replaces the element's content with the SVG, so the original
+    // source is kept aside: without it a second run would be handed mermaid's
+    // own output to parse.
+    document.querySelectorAll('.mermaid, pre.mermaid').forEach(node => {
+        if (node.dataset.source === undefined) {
+            node.dataset.source = node.textContent;
+        } else {
+            node.textContent = node.dataset.source;
+        }
+        delete node.dataset.processed;
+    });
+
+    mermaid.run();
+}
+
+if (document.fonts && document.fonts.load) {
+    Promise.all([
+        document.fonts.load('400 16px Poppins'),
+        document.fonts.load('700 16px Poppins'),
+    ])
+        .catch(() => {})
+        .then(renderMermaid);
+} else {
+    renderMermaid();
+}

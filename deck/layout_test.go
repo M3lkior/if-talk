@@ -26,12 +26,60 @@ func TestLayoutsRenderTheEmbeddedDefault(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		`<h2 class="max center-left">L'impact du numérique</h2>`,
+		`<h2 class="flex-1 m-0 text-left">L'impact du numérique</h2>`,
 		`src="/images/a.svg"`,
 		`src="/images/b.jpg"`,
 		"<h2>2,5%</h2>",
 		"Source: https://www.arcep.fr/",
 		"<speaker-notes><span>ADEME</span></speaker-notes>",
+	} {
+		if !strings.Contains(string(got), want) {
+			t.Errorf("got %q, want it to contain %q", got, want)
+		}
+	}
+}
+
+// Without logosDark, no conditional class is emitted: a talk that declares no
+// dark variant must render exactly as it did before this field existed, in
+// both themes. That is what protects sample/ and every existing talk.
+func TestHeaderLogosCarryNoThemeClassWithoutDarkLogos(t *testing.T) {
+	t.Parallel()
+
+	slide := deck.Slide{Talk: deck.Talk{Logos: []string{"/images/a.svg"}}}
+
+	got, err := deck.NewLayouts(t.TempDir()).Execute("default", slide)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if !strings.Contains(string(got), `src="/images/a.svg"`) {
+		t.Errorf("got %q, want it to contain the logo", got)
+	}
+	if strings.Contains(string(got), "dark:hidden") {
+		t.Errorf("got %q, want no dark:hidden when the talk declares no dark logos", got)
+	}
+}
+
+// With logosDark, both sets are emitted and the swap is left to CSS: nothing
+// on the Go side knows the current theme, which the browser alone decides.
+func TestHeaderEmitsBothLogoSetsWithDarkLogos(t *testing.T) {
+	t.Parallel()
+
+	slide := deck.Slide{Talk: deck.Talk{
+		Logos:     []string{"/images/a.svg"},
+		LogosDark: []string{"/images/a-dark.svg"},
+	}}
+
+	got, err := deck.NewLayouts(t.TempDir()).Execute("default", slide)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	for _, want := range []string{
+		`src="/images/a.svg"`,
+		"dark:hidden",
+		`src="/images/a-dark.svg"`,
+		"hidden dark:block",
 	} {
 		if !strings.Contains(string(got), want) {
 			t.Errorf("got %q, want it to contain %q", got, want)
@@ -63,7 +111,7 @@ func TestSplitLayoutWrapsTheContent(t *testing.T) {
 		t.Fatalf("got error %v, want none", err)
 	}
 
-	if want := `<split-view class="xlarge-height">`; !strings.Contains(string(got), want) {
+	if want := `<split-view class="h-stage-xlarge">`; !strings.Contains(string(got), want) {
 		t.Fatalf("got %q, want it to contain %q", got, want)
 	}
 }

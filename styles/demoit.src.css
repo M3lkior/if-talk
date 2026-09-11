@@ -1,0 +1,408 @@
+/*
+Build entry of the engine stylesheet. Output: handlers/resources/demoit.css,
+committed and embedded in the binary.
+
+Scanned sources are the engine's own embedded templates. A talk's slides are
+scanned by its own build (hack/css.sh <talk>), because a released binary has
+neither deck/layouts nor handlers/resources on disk.
+*/
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@import "./tokens.css";
+@import "./components.css";
+
+/*
+`source(none)` above turns off Tailwind's automatic source detection, which
+would otherwise scan the whole repository on top of the @source directives
+below -- talk folders included. That is not a size concern but a correctness
+one: the engine sheet would then carry a talk's classes, and the separation
+this two-sheet design rests on would exist only on paper.
+
+Globs, not directories: `@source "../handlers/resources/"` would scan
+demoit.css -- this build's own output -- and feed every class name in it back
+in as a candidate.
+*/
+@source "../handlers/resources/*.tmpl.html";
+@source "../deck/layouts/*.html";
+
+/*
+The chassis ships from the engine unconditionally rather than only when a
+scanned template happens to use it. Two reasons: a talk that overrides a layout
+should not have to re-emit the chassis from its own sheet, and an @utility is
+otherwise emitted only where it is seen -- so reordering a layout could silently
+drop one.
+*/
+@source inline("slide-main slide-narrow slide-header slide-footer slide-prose contact-row card slide-hero");
+
+/*
+deck/directive builds these class names in Go (transform.go toGrid, render.go
+splitAttributes), so no scanner will ever meet them in a source file. Without
+these two lines the panes of every split{cols=} slide silently take the whole
+row on stage, with nothing saying why -- the same failure mode transform.go
+already documents for a weight outside 1..12.
+*/
+@source inline("col-span-{1,2,3,4,5,6,7,8,9,10,11,12}");
+@source inline("h-stage-{small,medium,large,xlarge}");
+
+/*
+The base sheet every deck in this repo was authored against.
+
+beercss supplied a type scale and a vertical rhythm that no slide mentions, so
+nothing signalled their existence -- and Tailwind's preflight deliberately
+makes none of those assumptions: it sets headings to `font-size: inherit` and
+strips list markers. Without this block, every heading in every deck renders at
+body size and every list loses its bullets.
+
+The values are beercss 3.7.8's own, so a deck's `<h3>` means exactly what it
+meant before. In @layer base, so a utility on a slide still wins.
+*/
+@layer base {
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 400;
+        line-height: normal;
+    }
+
+    h1 { font-size: 3.5625rem; }
+    h2 { font-size: 2.8125rem; }
+    h3 { font-size: 2.25rem; }
+    h4 { font-size: 2rem; }
+    h5 { font-size: 1.75rem; }
+    h6 { font-size: 1.5rem; }
+
+    p {
+        margin-block: 0.5rem;
+    }
+
+    /* beercss restored native list rendering with `:not(nav) > :is(ul,ol)
+       { all: revert }`. `all` would revert the colours too and break the dark
+       theme, so only the three properties that matter are restored -- but the
+       selector shape is kept: scoping it to `main` instead would leave the
+       lists of an HTML deck that has no <main>, sample/'s included, with no
+       markers at all. */
+    :not(nav) > :is(ul, ol) {
+        margin-block: 1rem;
+        padding-inline-start: 2.5rem;
+        list-style: revert;
+    }
+
+    blockquote {
+        padding: 1rem;
+    }
+
+    /* Tailwind's preflight makes images block-level. Every deck here was
+       written against inline images: that is what let `text-align: center` on
+       a slide centre a photo, and what made a `<div><img/></div>` pair sit on
+       one line. Blocks would silently left-align every image in the repo.
+
+       svg is deliberately left out: mermaid renders one and sizes the diagram
+       to its container, so changing that container's layout box changes the
+       diagram. Only raster images needed this. */
+    :is(img, video) {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    table {
+        inline-size: 100%;
+        border-spacing: 0;
+        text-align: start;
+    }
+
+    :is(th, td) {
+        padding: 0.5rem;
+    }
+}
+
+/*
+Legibility tokens. A display profile redefines these and only these: never a
+geometry value, so a profile cannot break a layout.
+*/
+:root {
+    --rule: 1px;
+    --rule-opacity: 0.4;
+    --weight-body: 400;
+    --weight-thin: 100;
+
+    /* Component chrome. Custom properties cross the shadow DOM; classes do not. */
+    --dm-window-bg: #ffffff;
+    --dm-chrome-bg: linear-gradient(to bottom, #edeaed 0%, #dddfdd 100%);
+    --dm-chrome-border: #cbcbcb;
+    --dm-tabs-bg: #f3f3f3;
+    --dm-tab-bg: #ececec;
+    --dm-tab-fg: #000000;
+    --dm-code-fg: #212121;
+    --dm-code-selection: #bfd6ff;
+
+    /*
+    A linear-gradient, not a colour, so it is declared here rather than in
+    @theme: the --color-* prefix is Tailwind's colour namespace and would
+    generate bg-/text- utilities backed by a gradient, which is not a colour
+    and would never work. Read by the `em` treatment of slide-hero.
+    */
+    --color-text-gradient: linear-gradient(to bottom, #0f15fd 0%, #020466 100%);
+
+    /*
+    Opacity of the two decor layers of the stage, one token each rather than
+    one for both: the site lowers its mesh in dark mode and leaves its dot
+    grid alone.
+    */
+    --decor-dots: 0.08;
+    --decor-mesh: 0.3;
+}
+
+:root[data-display="tv"] {
+    --rule: 1.5px;
+    --rule-opacity: 0.7;
+    --weight-body: 500;
+    --weight-thin: 300;
+    --color-fg: #2a2d30;
+}
+
+:root[data-display="projector"] {
+    --rule: 2px;
+    --rule-opacity: 1;
+    --weight-body: 500;
+    --weight-thin: 400;
+    --color-fg: #000000;
+    --color-fg-muted: #2a2d30;
+
+    /* The decor goes out in a badly lit room. This stays within the contract
+       of a display profile -- the opacity of a purely decorative layer cannot
+       move a box -- and it hands the text back the contrast the profile is
+       there to raise in the first place. */
+    --decor-dots: 0;
+    --decor-mesh: 0;
+}
+
+/*
+The dark palette, aligned on the site's own.
+
+The site does not lighten its blue in dark mode: it inverts the hue outright,
+to gold with an amber / red / orange accent family. That inversion is the
+signature of the new zatsit, and reproducing it is the single change that
+makes a slide read as the current site rather than the previous one.
+
+--color-main keeps going through --color-main-dark, the indirection that was
+already there. The others are reassigned directly: giving each one a -dark
+companion would cost six levels of indirection for nothing, since this file
+carries both palettes anyway.
+*/
+.dark {
+    --color-fg: #e3e3e3;
+    --color-fg-muted: #94a3b8;
+    --color-surface: #1b1b1d;
+    --color-surface-raised: rgba(255, 255, 255, 0.05);
+    --color-outline: #334155;
+    --color-main: var(--color-main-dark);
+
+    --color-accent-1: #f59e0b;
+    --color-accent-2: #ef4444;
+    --color-accent-3: #f97316;
+
+    --logo-gradient-start: #f1be51;
+    --logo-gradient-mid: #f59e0b;
+    --logo-gradient-end: #ef4444;
+
+    --color-text-gradient: linear-gradient(135deg, #f1be51, #f59e0b, #ef4444);
+
+    /* The mesh drops in dark mode, as it does on the site. */
+    --decor-mesh: 0.16;
+
+    --dm-window-bg: #1c1d21;
+    --dm-chrome-bg: linear-gradient(to bottom, #2b2d33 0%, #23252a 100%);
+    --dm-chrome-border: #334155;
+    --dm-tabs-bg: #23252a;
+    --dm-tab-bg: #2b2d33;
+    --dm-tab-fg: #e3e3e3;
+    --dm-code-fg: #e3e3e3;
+    --dm-code-selection: #2f4a7a;
+}
+
+/*
+The stage. 1920x1080 is not a new convention: /pdf already renders at
+1920x1080@2x (handlers/pdf.go) and /grid already iframes at 1920x1080
+(grid.tmpl.html), while style.css mixed rem, px and vw and beercss switched
+columns on width thresholds. Pinning the stage makes the geometry the same on
+every 16:9 screen and letterboxes the rest.
+
+--stage-scale is set by demoit.js on resize: dividing a length by a length in
+calc() is specified but not yet implemented in browsers.
+
+The stage also retires the vw units style.css was full of: a
+`calc(100% - 14vw)` on split-view used to measure the window and now measures
+the stage, which is a constant.
+*/
+html {
+    /*
+    No font-size here on purpose: 16px is both the value already in effect and
+    Tailwind's preflight default, so every rem in a deck keeps its length.
+    */
+    background-color: var(--color-void);
+}
+
+body {
+    margin: 0;
+    min-block-size: 100vh;
+    background-color: var(--color-void);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-weight: var(--weight-body);
+}
+
+/*
+Anchored top-left and centred by a translation demoit.js computes, rather than
+centred with translate(-50%, -50%).
+
+The difference only shows under browser zoom, and it matters there: a
+percentage translation puts half the overflow above and left of the viewport,
+where nothing can scroll to it, so zooming in cropped the slide unreachably.
+Origin at 0 0 with a non-negative offset sends all the overflow right and down,
+which the document can scroll.
+*/
+.stage {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 1920px;
+    block-size: 1080px;
+    transform: translate(var(--stage-x, 0px), var(--stage-y, 0px)) scale(var(--stage-scale, 1));
+    transform-origin: 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--color-surface);
+
+    /* The stage must create a stacking context under every circumstance, so
+       that the negative z-index of the decor below stays bounded to it. Its
+       own transform already creates one -- but .stage-maximized sets transform
+       to none, and the decor would then fall behind the stage's background. */
+    isolation: isolate;
+}
+
+/*
+The decor, taken from zatsit.fr: the dot grid of its .dot-grid and the mesh
+gradient of its .hero-gradient.
+
+On the stage rather than on the slides, and that is the point: no slide's
+markup mentions it, no layout has to know about it, and it cannot shift any
+geometry. .stage is already overflow:hidden, so nothing spills.
+
+The site's floating blobs are deliberately absent. This deck runs ttys and
+live iframes for three quarters of an hour, and an animated blur(80px) beside
+them is a permanent cost for an effect nobody looks at.
+*/
+.stage::before,
+.stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /*
+    Negative, and that is what keeps the rest untouched. A child at a negative
+    z-index paints above the background of its stacking context and below the
+    in-flow content, so the decor slips between the stage's background and the
+    slides without a single child having to be repositioned.
+
+    At z-index 0 the children would have needed raising with a
+    `.stage > * { position: relative }` -- which would override the
+    `position: absolute` of .slide-footer, an unlayered rule beating an
+    @utility in @layer utilities. The slide footer would come back into the
+    flow, and the progress bar with it.
+    */
+    z-index: -1;
+    /* These layers cover the whole stage and would otherwise swallow the
+       clicks meant for the panes. */
+    pointer-events: none;
+}
+
+.stage::before {
+    background-image: radial-gradient(var(--color-main) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: var(--decor-dots);
+}
+
+.stage::after {
+    background:
+        radial-gradient(ellipse 80% 50% at 20% -20%, var(--color-accent-1), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 0%, var(--color-main), transparent 50%),
+        radial-gradient(ellipse 50% 60% at 0% 100%, var(--color-accent-3), transparent 50%),
+        radial-gradient(ellipse 70% 50% at 100% 80%, var(--color-accent-2), transparent 50%);
+    opacity: var(--decor-mesh);
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+/*
+The cover and the quotes push both layers.
+
+:has() rather than a class on .stage: a layout cannot reach its own container,
+which is written in index.tmpl.html and belongs to the engine. The selector is
+supported by every targeted browser, the chromedp of /pdf included.
+
+The :not([data-display="projector"]) is not belt and braces, it is the whole
+reason the profile still works here. A custom property is resolved from the
+nearest element that declares it, and specificity never enters into it across
+two different elements: :root[data-display="projector"] sets --decor-* on
+<html>, this rule sets them on .stage, a descendant. So without the guard the
+reinforcement would quietly win on every cover and every quote, and the
+projector profile would extinguish the decor on the working slides only --
+which is exactly what a screenshot of the cover under `projector` showed.
+*/
+:root:not([data-display="projector"]) .stage:has(main.slide-hero) {
+    --decor-dots: 0.1;
+    --decor-mesh: 0.45;
+}
+
+:root.dark:not([data-display="projector"]) .stage:has(main.slide-hero) {
+    --decor-mesh: 0.26;
+}
+
+/*
+While a pane is maximised, the stage stops being a stage.
+
+A maximised window is `position: fixed`, which used to resolve against the
+viewport: it filled the screen, and a browser zoom grew its content while it
+kept filling the screen. A transform makes its ancestor the containing block
+instead, so the window became a fixed 1920x1080 box in stage coordinates --
+and zooming then grew the content inside a box that could not grow with it,
+which is where the scrollbars inside the terminal and the browser came from.
+
+`transform: none` hands the window back to the viewport, and the 100vw/100vh
+size keeps the stage covering the screen so nothing of the slide peeks out
+from behind it. demoit.js adds this class on `demoit:maximize`.
+*/
+.stage.stage-maximized {
+    inline-size: 100vw;
+    block-size: 100vh;
+    transform: none;
+}
+
+/* A talk that does not opt into the stage keeps the full window, as before. */
+.no-stage {
+    inline-size: 100%;
+    min-block-size: 100vh;
+    background-color: var(--color-surface);
+}
+
+/*
+Set by demoit.js on the panes of a slide while another one is maximised.
+
+visibility rather than display: display:none would tear a tty or a code-server
+iframe down and bring it back empty, losing whatever the speaker had typed.
+*/
+[data-demoit-hidden] {
+    visibility: hidden;
+}
+
+#progression {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    block-size: 6px;
+    margin: 0;
+    border-radius: 0 3px 3px 0;
+    background-color: var(--color-fg);
+    opacity: var(--rule-opacity);
+}

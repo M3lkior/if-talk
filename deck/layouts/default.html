@@ -1,4 +1,4 @@
-{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}main responsive large-height center-align{{ end }}">
+{{ template "header" . }}<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-narrow slide-prose flex flex-col justify-center text-center{{ end }}">
 {{ .Content }}
 </main>
 {{ template "source" . }}{{ template "notes" . }}

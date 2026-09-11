@@ -28,7 +28,7 @@ import (
 
 //go:embed resources/grid.tmpl.html
 var gridHTML string
-var gridTemplate = template.Must(template.New("grid").Funcs(template.FuncMap{"hash": hash}).Parse(gridHTML))
+var gridTemplate = template.Must(template.New("grid").Funcs(templateFuncs).Parse(gridHTML))
 
 // Grid displays a grid view of all steps as iframes.
 //

@@ -1,11 +1,15 @@
-<main class="{{ if .Class }}{{ .Class }}{{ else }}responsive max center-align{{ end }}">
+<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-hero flex flex-col items-center justify-center text-center{{ end }}">
 {{ .Content }}
-<div class="large-space"></div>
-<div class="large-space"></div>
-<div class="grid center-align">
-    {{ range .Talk.Logos }}<div class="s12 m6 l6">
-        <img class="xsmall-height xsmall-width" src="{{ . }}" loading="lazy">
-    </div>
+{{/* The stacked large-space spacers and the s12/m6/l6 grid are one flex row:
+     the grid was never doing grid work, and a fixed stage has one width, so
+     the m6/l6 breakpoints had nothing left to switch on.
+
+     25rem is what the talk's xsmall-height/xsmall-width override actually
+     resolved to. object-contain rather than cover, because these are logos and
+     the object-fit:cover beercss forced on `responsive` images cropped them. */}}
+<div class="mt-12 flex items-center justify-center gap-12">
+    {{ range .Talk.Logos }}<img class="h-[25rem] w-[25rem] object-contain{{ if $.Talk.LogosDark }} dark:hidden{{ end }}" src="{{ . }}" loading="lazy">
+    {{ end }}{{ range .Talk.LogosDark }}<img class="h-[25rem] w-[25rem] object-contain hidden dark:block" src="{{ . }}" loading="lazy">
     {{ end }}
 </div>
 </main>

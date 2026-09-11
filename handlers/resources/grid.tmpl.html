@@ -3,7 +3,43 @@
 	<head>
 		<meta charset="utf-8">
 		<title>All pages</title>
+		<link rel="stylesheet" href="/demoit.css?hash={{ engineHash }}">
+		<script>
+			// ?theme= and ?display= are written to localStorage rather than only
+			// applied here, because the slide iframes read localStorage
+			// themselves and this script runs before they load. That is what
+			// makes the URL override reach the whole grid, chrome and slides
+			// alike, without threading the parameter through every iframe src.
+			(function () {
+				const params = new URLSearchParams(location.search);
+				let theme = params.get('theme');
+				let display = params.get('display');
+
+				try {
+					if (theme) {
+						localStorage.setItem('demoit_theme', theme);
+					}
+					if (display) {
+						localStorage.setItem('demoit_display', display);
+					}
+					theme = theme || localStorage.getItem('demoit_theme');
+					display = display || localStorage.getItem('demoit_display');
+				} catch (e) {
+					// A locked-down browser throws; the default theme is a fine
+					// answer, and the iframes will reach the same conclusion.
+				}
+
+				if (theme === 'dark') {
+					document.documentElement.classList.add('dark');
+				}
+				document.documentElement.dataset.display = display || 'screen';
+			})();
+		</script>
     <style>
+			body {
+				background-color: var(--color-surface);
+				color: var(--color-fg);
+			}
 			.cell {
 				display: inline-block;
 				overflow: hidden;
@@ -15,7 +51,7 @@
 			}
 			.thumb {
 				height: 270px;
-				border: 1px solid #BBB;
+				border: 1px solid var(--color-outline);
 			}
       .thumb iframe {
 				width: 1920px;

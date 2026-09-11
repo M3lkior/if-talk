@@ -1,0 +1,53 @@
+/*
+Build entry of this talk's stylesheet. Output: tailwind.css, committed and
+served on /tailwind.css.
+
+Utilities only. The preflight, the theme variables and the whole slide-*
+chassis ship once, from the engine's own /demoit.css, so nothing here needs to
+emit them again.
+
+Run `hack/css.sh impact-framework` after writing a Tailwind class this
+stylesheet has never seen -- until then, the class does not exist.
+*/
+
+/*
+The first import is not optional. Referencing only this talk's tokens leaves
+Tailwind's own theme out of scope, and every utility backed by --spacing or by
+a default colour -- gap-4, px-8, text-white -- is then silently not generated.
+*/
+@import "tailwindcss/theme.css" theme(reference);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "./tokens.css" theme(reference);
+
+/*
+Declared here rather than imported from the engine's components.css: the only
+thing this talk needs out of that file is the variant itself, and a second copy
+of the chassis would be a file to keep in sync for no output.
+
+Class-driven, not prefers-color-scheme: the speaker switches the theme.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+`source(none)` above turns off automatic detection, so these are the only
+sources. `../` covers demoit.md, demoit-en.html and -- an explicit @source does
+reach into a dot-directory -- .demoit/layouts.
+*/
+@source "../";
+
+/*
+The components are excluded on purpose. They carry no Tailwind class in the
+light DOM -- their styles live in their own shadow roots -- but the extractor
+reads any word that could be a class name, comments included, so prose about
+`display: inline-block` or a `data-demoit-hidden` attribute was quietly adding
+utilities nothing uses.
+*/
+@source not "../.demoit/js/";
+
+/*
+deck/directive assembles these in Go, so they appear in no source file. The
+engine sheet declares them too; a talk that overrides deck/layouts/split.html
+needs them from its own build.
+*/
+@source inline("col-span-{1,2,3,4,5,6,7,8,9,10,11,12}");
+@source inline("h-stage-{small,medium,large,xlarge}");

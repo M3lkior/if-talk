@@ -25,7 +25,7 @@ import (
 
 //go:embed resources/speakernotes.tmpl.html
 var speakerNotesHTML string
-var speakerNotesTemplate = template.Must(template.New("speakerNotes").Funcs(template.FuncMap{"hash": hash}).Parse(speakerNotesHTML))
+var speakerNotesTemplate = template.Must(template.New("speakerNotes").Funcs(templateFuncs).Parse(speakerNotesHTML))
 
 // SpeakerNotes provides the presenter view, which depends on the main window to
 // be able to display the "current" slide with notes.

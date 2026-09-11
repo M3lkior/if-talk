@@ -50,7 +50,7 @@ func TestLoadRendersAMarkdownDeck(t *testing.T) {
 		t.Errorf("got %q, want the cover to show the talk's logo", slides[0])
 	}
 	for _, want := range []string{
-		`<h2 class="max center-left">Les chiffres</h2>`,
+		`<h2 class="flex-1 m-0 text-left">Les chiffres</h2>`,
 		"<strong>2,5%</strong>",
 		"Source: https://arcep.fr",
 		"<speaker-notes>",
@@ -77,7 +77,7 @@ func TestLoadRendersTheTitleAsMarkdown(t *testing.T) {
 	// title (goldmark would otherwise have produced
 	// `<h2 ...><p>L'IA et le <strong>carbone</strong></p>\n</h2>`) and that the
 	// apostrophe is bare rather than HTML-entity-escaped as `&#39;`.
-	if want := `<h2 class="max center-left">L'IA et le <strong>carbone</strong></h2>`; !strings.Contains(string(slides[0]), want) {
+	if want := `<h2 class="flex-1 m-0 text-left">L'IA et le <strong>carbone</strong></h2>`; !strings.Contains(string(slides[0]), want) {
 		t.Errorf("got %q, want it to contain %q", slides[0], want)
 	}
 }
@@ -94,8 +94,8 @@ func TestLoadDefaultsAMainClassFromTheLayout(t *testing.T) {
 		t.Fatalf("got error %v, want none", err)
 	}
 
-	if want := `<main class="responsive max">`; !strings.Contains(string(slides[0]), want) {
-		t.Errorf("got %q, want it to contain %q — a slide with no class: key should get its layout's default from deck.defaultClasses", slides[0], want)
+	if want := `<main class="slide-main">`; !strings.Contains(string(slides[0]), want) {
+		t.Errorf("got %q, want it to contain %q — a slide with no class: key should get the fallback its layout template carries", slides[0], want)
 	}
 }
 
@@ -114,8 +114,8 @@ func TestLoadClassKeyReplacesTheLayoutDefault(t *testing.T) {
 	if want := `<main class="main responsive xlarge-height">`; !strings.Contains(string(slides[0]), want) {
 		t.Errorf("got %q, want it to contain %q — a class: key must replace the default layout's classes wholesale, not add to them", slides[0], want)
 	}
-	if strings.Contains(string(slides[0]), "center-align") {
-		t.Errorf("got %q, want no center-align — class: replaces the default layout's hardcoded classes instead of appending to them, so a slide that declares xlarge-height must not also carry the default's own large-height/center-align", slides[0])
+	if strings.Contains(string(slides[0]), "slide-prose") {
+		t.Errorf("got %q, want no slide-prose — class: replaces the layout's own class list instead of appending to it, so a slide that declares its own classes must not also carry the layout's fallback", slides[0])
 	}
 }
 
@@ -240,7 +240,7 @@ func TestLoadLetsATalkOverrideALayoutsDefaultClasses(t *testing.T) {
 	if want := `<main class="classes-du-talk">`; !strings.Contains(string(slides[0]), want) {
 		t.Errorf("got %q, want it to contain %q — a talk's own layout must supply its own default classes", slides[0], want)
 	}
-	if strings.Contains(string(slides[0]), "large-height") {
+	if strings.Contains(string(slides[0]), "slide-main") {
 		t.Errorf("got %q, want none of the embedded default.html's classes — the talk's layout replaced it wholesale", slides[0])
 	}
 }

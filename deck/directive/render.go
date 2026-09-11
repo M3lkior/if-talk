@@ -119,10 +119,23 @@ func copyAttributes(keys ...string) func(map[string]string) (string, error) {
 // splitAttributes renders the class of a <split-view>, built from its height.
 func splitAttributes(attrs map[string]string) (string, error) {
 	if height := attrs["height"]; height != "" {
-		return fmt.Sprintf(` class="%s"`, html.EscapeString(height+"-height")), nil
+		return fmt.Sprintf(` class="%s"`, html.EscapeString(stageHeightClass(height))), nil
 	}
 
 	return "", nil
+}
+
+// stageHeightClass is the height utility a height name maps to. The name
+// travels verbatim -- h-stage-xlarge, not h-stage-xl -- because a deck writes
+// `height: xlarge` and deck/layouts/split.html interpolates that value as-is;
+// translating here would mean maintaining a lookup table for nothing.
+//
+// The tokens behind these utilities are a share of the slide's main area rather
+// than an absolute length, so a pane cannot be taller than the stage holding
+// it. It is shared with the transformer, which appends the same class to a
+// weighted grid.
+func stageHeightClass(height string) string {
+	return "h-stage-" + height
 }
 
 // gridAttributes renders the class of a grid or column node, whether the

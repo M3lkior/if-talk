@@ -81,7 +81,11 @@ func readPagesAsPNG(ctx context.Context, images [](chan image)) {
 		result := result
 
 		actions[group] = append(actions[group],
-			chromedp.Navigate(fmt.Sprintf("http://%s/%d", flags.WebServerAddress(), i)),
+			// theme=light is forced rather than inherited: a PDF of dark slides
+			// is a PDF of ink. The query parameter wins over whatever the
+			// browser remembered, the same way ?grid=true already steers a
+			// render.
+			chromedp.Navigate(fmt.Sprintf("http://%s/%d?theme=light&display=screen", flags.WebServerAddress(), i)),
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				if err := emulation.SetDeviceMetricsOverride(width*int64(zoom), height*int64(zoom), 1, false).Do(ctx); err != nil {
 					result <- image{err: err}

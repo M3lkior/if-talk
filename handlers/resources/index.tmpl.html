@@ -3,44 +3,56 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Demo {{ .CurrentStep }}/{{ .StepCount }}</title>
-		<link rel="stylesheet" href="/style.css?hash={{ "style.css" | hash }}">
-		<link href="https://cdn.jsdelivr.net/npm/beercss@3.7.8/dist/cdn/beer.min.css" rel="stylesheet">
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+		{{/* Order matters: the chassis and its tokens first, then the talk's
+		     utilities, then the talk's own hand-written layer, which must win. */}}
+		<link rel="stylesheet" href="/demoit.css?hash={{ engineHash }}">
+		{{/* `with` skips the link when hash returns "" for a missing file: a talk
+		     that has no Tailwind build of its own must not ask for one on every
+		     slide. */}}
+		{{ with "tailwind.css" | hash }}<link rel="stylesheet" href="/tailwind.css?hash={{ . }}">
+		{{ end }}<link rel="stylesheet" href="/style.css?hash={{ "style.css" | hash }}">
 
 		<script>
 			const CurrentStep = {{ .CurrentStep }};
 			const StepCount = {{ .StepCount }};
 			const NextURL = '{{ .NextURL }}';
 			const PrevURL = '{{ .PrevURL }}';
+			const ThemeEnabled = {{ .Dark }};
 		</script>
+		{{ if .Dark }}<script>
+			// Runs before the first paint on purpose. Every slide is a full page
+			// load, so setting the theme from demoit.js would flash a white slide
+			// on every single navigation.
+			(function () {
+				const params = new URLSearchParams(location.search);
+				let theme = params.get('theme');
+				let display = params.get('display');
+				try {
+					theme = theme || localStorage.getItem('demoit_theme');
+					display = display || localStorage.getItem('demoit_display');
+				} catch (e) {
+					// A locked-down browser throws on localStorage. The default
+					// theme is a perfectly good answer.
+				}
+				if (theme === 'dark') {
+					document.documentElement.classList.add('dark');
+				}
+				document.documentElement.dataset.display = display || 'screen';
+			})();
+		</script>{{ end }}
 	</head>
-	<body class="light poppins-regular">
-    <div id="app" class="responsive max ">
-		<dialog id="maximized" class="max">
-			<split-view class="max"></split-view>
-		</dialog>
-<!--		<main class="responsive max ">-->
-		<!--	<div id="top_">-->
-		  {{ .HTML }}
+	<body>
+		<div id="app" class="{{ if .Stage }}stage{{ else }}no-stage{{ end }}">
+			{{ .HTML }}
 			<nav-arrows previous="{{ .PrevURL }}" next="{{ .NextURL }}"></nav-arrows>
-	<!--		</div>-->
-			<footer class="fixed">
-				<div class="grid">
-					<div class="s12">
-				<h5 id="progression" class="no-margin" style="width: calc(100vw * {{ .CurrentStep }} / {{ .StepCount }})"></h5>
-					</div>
-					<div class="s12">
-				<div class="right-align poppins-thin">Slides framework adapted from <span class="poppins-bold">demoit</span></div>
-					</div>
-				</div>
+			<footer class="slide-footer">
+				{{/* Against the stage, not the window: the reference width is
+				     1920, which is what the stage is, scaled or not. */}}
+				<h5 id="progression" style="width: calc(1920px * {{ .CurrentStep }} / {{ .StepCount }})"></h5>
+				<div class="px-4 pb-1 text-right text-fg-muted" style="font-weight: var(--weight-thin)">Slides framework adapted from <span class="font-bold">demoit</span></div>
 			</footer>
-<!--		</main>-->
-    </div>
+		</div>
 	</body>
-	<script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.7.8/dist/cdn/beer.min.js"></script>
-	<script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 	<script type="module" src="/js/demoit.js?hash={{ "js/demoit.js" | hash }}"></script>
 	{{ if .DevMode }}<script src="/livereload.js"></script>{{ end }}
 </html>

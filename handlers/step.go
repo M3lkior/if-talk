@@ -35,7 +35,15 @@ import (
 
 //go:embed resources/index.tmpl.html
 var indexHTML string
-var indexTemplate = template.Must(template.New("index").Funcs(template.FuncMap{"hash": hash}).Parse(indexHTML))
+var indexTemplate = template.Must(template.New("index").Funcs(templateFuncs).Parse(indexHTML))
+
+// templateFuncs is shared by every page template. `hash` busts the cache of a
+// file served out of the presentation folder; `engineHash` does the same for
+// the stylesheet embedded in the binary, which `hash` cannot see.
+var templateFuncs = template.FuncMap{
+	"hash":       hash,
+	"engineHash": EngineCSSHash,
+}
 
 // Page describes a page of the demo.
 type Page struct {
@@ -47,6 +55,11 @@ type Page struct {
 	CurrentStep int
 	StepCount   int
 	DevMode     bool
+	// Stage and Dark come from the talk's .demoit/talk.yml theme block. They
+	// gate the fixed stage and the theme switcher, so a talk that declares
+	// neither renders exactly as it did before the chassis existed.
+	Stage bool
+	Dark  bool
 }
 
 // Step renders a given page.
@@ -97,6 +110,14 @@ func readSteps(folder string) ([]Page, error) {
 		return nil, err
 	}
 
+	// The talk is read again here rather than threaded out of deck.Load, which
+	// returns rendered slides only. It is the same file deck.Load already read,
+	// and a missing talk.yml is not an error.
+	talk, err := deck.LoadTalk(folder)
+	if err != nil {
+		return nil, err
+	}
+
 	steps := make([]Page, 0, len(rendered))
 	for i, html := range rendered {
 		url := "/"
@@ -110,6 +131,8 @@ func readSteps(folder string) ([]Page, error) {
 			DevMode:     *flags.DevMode,
 			CurrentStep: i,
 			URL:         url,
+			Stage:       talk.Theme.Stage,
+			Dark:        talk.Theme.Dark,
 		})
 	}
 
