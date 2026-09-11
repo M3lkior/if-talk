@@ -89,11 +89,22 @@ A directive takes the whole line. Anything left on it after the name and the `{�
 
 **A layout owns its default `<main>` classes as well as its markup.** `.Class` arrives from the slide's `class:` key and is empty when there is none, so every layout — embedded or talk-added — writes its own fallback as `<main class="{{ if .Class }}{{ .Class }}{{ else }}…{{ end }}">`. The engine deliberately holds no map of per-layout defaults: keying one by layout name would make a talk's override of `default.html` unable to change the classes that layout renders, and every layout has to be overridable. That is also why `default.html` and `content.html` are no longer byte-identical — `default` falls back to `slide-main slide-prose flex flex-col justify-center text-center`, `content` to `slide-main slide-prose`.
 
-**`.demoit/talk.yml`** (`deck/talk.go`) declares `layout` (the deck-wide default a slide falls back to when its own frontmatter names none), `logos` (image paths rendered by `cover.html` and the header partial), `logosDark` (their dark-theme counterparts, in the same order), `title` and `subtitle` (the cover's own heading and byline), and a `theme:` block (`stage:` and `dark:`, both defaulting to false — see below).
+**`talk.yml`** (`deck/talk.go`) sits at the **root of the presentation folder**, not in `.demoit/` — it is the one file a speaker edits by hand for reasons that have nothing to do with the browser, while `.demoit/` is what the server serves assets from. There is no fallback to the old location, and `TestLoadTalkIgnoresTheOldDemoitLocation` pins that: a stray `.demoit/talk.yml` is silently *not* read, which beats keeping a talk on settings nobody can find.
+
+It declares `layout` (the deck-wide default a slide falls back to when its own frontmatter names none), `logo` and `eventLogo` (see below), `title` and `subtitle` (the cover's own heading and byline), and a `theme:` block (`stage:` and `dark:`, both defaulting to false — see below).
 
 `title` and `subtitle` are **rendered through the same Markdown pipeline as a slide's `title:`** (`renderTitle`, `deck/deck.go`), so `title: A la découverte d'*Impact Framework*.` puts the accented words in an `<em>` — which on a `slide-hero` layout is what the gradient treatment hangs off. Both are `template.HTML`, not `string`.
 
-`logosDark` is read by the header partial and by both cover layouts, which emit **both** sets and let CSS pick one (`dark:hidden` on the light set, `hidden dark:block` on the dark one). The conditional class is only written when `logosDark` is non-empty, so a talk that declares none — `sample/`, which has no `talk.yml` at all — renders exactly as it did before the field existed.
+**Logos are a `talk.yml` matter and nothing else.** Two keys, each a `Logo` — `white` (what a light theme shows) and `dark` (what a dark theme shows):
+
+| Key | What it is |
+|---|---|
+| `logo` | the speaker's own logo, on every header and on the cover |
+| `eventLogo` | the event the talk is given at. Optional; an undeclared block is a zero `Logo` and is dropped rather than rendered as an `<img>` with an empty `src` |
+
+`Talk.Logos()` returns the declared ones in that order, and **the variants are paired per logo rather than across two lists** — which is the whole reason the shape changed. The old `logos` / `logosDark` pair only worked while both lists had the same length, so a partner logo with no dark variant had to be repeated in the dark list to keep its place. Now it declares `white` alone, carries no conditional class, and shows in both themes. Both images are still emitted and CSS picks one (`dark:hidden` / `hidden dark:block`): nothing on the Go side knows the current theme.
+
+**No layout writes logo markup.** `partials.html` defines `logos` (header size) and `coverLogos` (cover size), and every layout that shows them — embedded or talk-added — calls one of the two. This is not tidiness: a layout is the one part of the rendering a talk may replace, so a rule kept in a template is a rule an override loses. That is exactly how `impact-framework/.demoit/layouts/default-h3.html` ended up spelling the markup out without a dark variant, showing the light logo on a dark slide while every other header swapped correctly. `TestATalkLayoutRendersTheSharedLogosPartial` pins that a talk's own layout can reach the partial.
 
 `footer` is still parsed and still read by nothing: the on-screen footer (progress bar + "Slides framework adapted from demoit") is static markup in `handlers/resources/index.tmpl.html`, unrelated to `Talk.Footer`.
 
@@ -175,7 +186,11 @@ Both pseudo-elements sit at **`z-index: -1`**, which is what keeps them from tou
 
 **mermaid keeps its light theme in both modes, on a light ground of its own** (`.dark .mermaid` in `impact-framework/.demoit/style.css`). Its own `dark` theme sizes this deck's `block-beta` nodes narrower than the labels it paints into them.
 
-**Known defect, this one figure only:** its node labels are clipped on the right. The pre-migration render was not, and one intermediate build during the migration was not either, but that state could not be reconstructed by bisection. Ruled out, each on a deterministic render: mermaid's `dark` and `base` themes, `base` driven from the deck's tokens, pinning `fontFamily` and `fontSize` (also inside `themeVariables`), block padding, a local-only font stack for `.mermaid`, rendering immediately versus after the webfont, and the `.dark .mermaid` rule itself. It is worth a fresh look with mermaid's own layout debugging rather than more guesses from outside.
+**mermaid has to render with the stage's scale undone, and `renderMermaid` does it with a counter-scale.** This was a long-standing defect — node labels clipped on the right — and the cause was the stage, not fonts or themes: mermaid sizes each node from a `getBoundingClientRect()` of its label, and that call reports the **transformed** box. `.stage` scales everything inside it, so a label was measured `--stage-scale` times too narrow and then painted into the SVG's own, unscaled user units. It reproduced as a straight proportion — "Mock d'observations" measured 59.6px in a 960px window, 130.6px in a 1920px one and 272.7px in a 3840px one, for a string whose width depends on none of that. With the counter-scale it is 142.09px at every size.
+
+The counter-scale goes on the `.mermaid` container, never on `.stage`: a transform changes what is painted and never the layout, so the container keeps its size and position on the slide and nothing else on the stage moves. The element is `visibility: hidden` until mermaid is done, so the scaled-up intermediate state is never on screen. Setting `--stage-scale` to 1 for the duration would work too and would flash the whole slide.
+
+**Anything else that measures the DOM from inside the stage has the same trap.** `getBoundingClientRect`, `offsetWidth` through a transformed ancestor, a library that lays out from measured text — all of them read scaled pixels on this stage.
 
 **Do not add padding to `.mermaid`,** and do not give `svg` a `display` of its own. mermaid measures that container to size its columns, so either one narrows it and clips the labels for real, in both themes — a `display: inline-block` on `svg` in the chassis did exactly that, which is why `styles/demoit.src.css` restores inline images for `img` and `video` only.
 
@@ -183,7 +198,7 @@ Both pseudo-elements sit at **`z-index: -1`**, which is what keeps them from tou
 
 | Class | What it is |
 |---|---|
-| `slide-main` | the slide's main area: `flex: 1`, `min-block-size: 0` (so a percentage-height pane inside it can shrink), full width, small inline padding |
+| `slide-main` | the slide's main area: `flex: 1`, `min-block-size: 0` (so a percentage-height pane inside it can shrink), full width, `1rem` of padding on all four sides. The block padding is the gap under the header's rule — without it every pane of every split slide started at 0px under the line and read as glued to it — and the inline value matches `slide-header`'s, so a slide's first column lines up with the title above it. An `h-stage-*` pane is 100% of the *content* box, so it shrinks with the padding rather than overflowing |
 | `slide-header` | the header row: flex, gap, accent colour, bottom rule of `var(--rule)` |
 | `slide-footer` | the footer pinned to the bottom of the stage |
 | `slide-prose` | the vertical rhythm beercss gave every slide through one global `* + :is(…)` rule, made explicit as `& > * + * { margin-block-start: 1rem }` |
@@ -203,7 +218,7 @@ Both pseudo-elements sit at **`z-index: -1`**, which is what keeps them from tou
 
 - Go files carry the Apache-2.0 header from Google/David Gageot — keep it on new files in the engine. **`_test.go` files are the exception and carry no header**: that is the established convention here (no test file on the branch that added the suite has one), and `goheader` has no template configured in `golangci.yml`, so lint enforces neither side of it.
 - Dependencies are **vendored** (`vendor/`); after touching `go.mod` run `go mod vendor`.
-- Adding a talk = new top-level folder with `demoit.md` (or `demoit.html`) + `.demoit/` (copy an existing `.demoit/js/demoit.js` and `style.css` as the starting point). Localized decks are `demoit-<locale>.md`/`demoit-<locale>.html` side by side.
+- Adding a talk = new top-level folder with `demoit.md` (or `demoit.html`) and `talk.yml` at its root, plus `.demoit/` (copy an existing `.demoit/js/demoit.js` and `style.css` as the starting point). Localized decks are `demoit-<locale>.md`/`demoit-<locale>.html` side by side.
 - **The palette that actually applies lives in the engine**, not in the talk: `styles/tokens.css` for the light values and the `.dark` block of `styles/demoit.src.css` for the dark ones. `<folder>/.demoit/tokens.css` is a **mirror** of the first — imported with `theme(reference)`, it hands the vocabulary to the utility generator and **emits nothing at all**, which is why a talk's `tailwind.css` carries no `:root` block. Letting the two drift therefore repaints nothing; it only generates utilities whose `var()` fallback is dead. Edit them together. **That file must contain `@theme` blocks and nothing else** — Tailwind rejects a referenced file carrying any other rule. `<folder>/.demoit/style.css` remains the talk's hand-written layer: `@font-face`, one-off selectors, anything that is not a token.
 - **Switching that mirror to a plain import does not work**, and the failure is silent: the `:root, :host` block Tailwind then emits is unlayered and of specificity `(0,1,0)`, exactly like the engine's unlayered `.dark`. At equal specificity source order decides, and `/tailwind.css` loads *after* `/demoit.css` — so the light values would win over the dark ones and dark mode would simply stop working.
 - A talk's `tailwind.src.css` **must** start with `@import "tailwindcss/theme.css" theme(reference);`. Without it Tailwind's own theme is out of scope and every utility backed by `--spacing` or a default colour — `gap-4`, `px-8`, `text-white` — is silently not generated.
