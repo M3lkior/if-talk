@@ -15,8 +15,15 @@
      around the logos was never a useful grid. */}}
 {{ define "header" }}<header class="slide-header">
     <h2 class="flex-1 m-0 text-left">{{ .Title }}</h2>
+    {{/* Both sets are emitted and CSS picks one: nothing here knows the
+         current theme, which the browser alone decides. The {{ if }} is the
+         whole mechanism -- without logosDark no conditional class is written
+         at all, so a talk that declares no dark variant renders exactly as it
+         did before the field existed. $ is the root context, the Slide, since
+         . is rebound to the current element inside a range. */}}
     <div class="flex items-center gap-4">
-        {{ range .Talk.Logos }}<img class="size-12 rounded-full object-cover" src="{{ . }}">
+        {{ range .Talk.Logos }}<img class="size-12 rounded-full object-cover{{ if $.Talk.LogosDark }} dark:hidden{{ end }}" src="{{ . }}">
+        {{ end }}{{ range .Talk.LogosDark }}<img class="size-12 rounded-full object-cover hidden dark:block" src="{{ . }}">
         {{ end }}
     </div>
 </header>

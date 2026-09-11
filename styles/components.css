@@ -99,3 +99,18 @@ pre-migration render, not guessed.
     padding: 0.5rem;
     background-color: var(--color-surface);
 }
+
+/*
+Marks the layouts that get the full treatment: the cover and the quotes.
+
+The site only decorates its hero and leaves its content sections flat -- same
+rule here, so the decor never competes with a terminal or with code.
+
+The utility carries almost nothing itself: it is a handle, read by the stage
+(which raises both decor layers when it sees one) and by a talk's own `em`
+treatment. position:relative rather than nothing at all, so that a cover can
+absolutely position something against its own main area.
+*/
+@utility slide-hero {
+    position: relative;
+}

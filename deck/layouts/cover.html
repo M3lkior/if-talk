@@ -1,4 +1,4 @@
-<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main flex flex-col items-center justify-center text-center{{ end }}">
+<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-hero flex flex-col items-center justify-center text-center{{ end }}">
 {{ .Content }}
 {{/* The stacked large-space spacers and the s12/m6/l6 grid are one flex row:
      the grid was never doing grid work, and a fixed stage has one width, so
@@ -8,7 +8,8 @@
      resolved to. object-contain rather than cover, because these are logos and
      the object-fit:cover beercss forced on `responsive` images cropped them. */}}
 <div class="mt-12 flex items-center justify-center gap-12">
-    {{ range .Talk.Logos }}<img class="h-[25rem] w-[25rem] object-contain" src="{{ . }}" loading="lazy">
+    {{ range .Talk.Logos }}<img class="h-[25rem] w-[25rem] object-contain{{ if $.Talk.LogosDark }} dark:hidden{{ end }}" src="{{ . }}" loading="lazy">
+    {{ end }}{{ range .Talk.LogosDark }}<img class="h-[25rem] w-[25rem] object-contain hidden dark:block" src="{{ . }}" loading="lazy">
     {{ end }}
 </div>
 </main>

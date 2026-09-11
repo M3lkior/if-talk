@@ -106,6 +106,24 @@ so French needs both.
 @font-face {
     font-family: "Poppins";
     font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/poppins-600-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/poppins-600-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Poppins";
+    font-style: normal;
     font-weight: 700;
     font-display: swap;
     src: url("/fonts/poppins-700-latin.woff2") format("woff2");
@@ -121,15 +139,47 @@ so French needs both.
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* The cover's gradient plate. */
-.title {
-    background: linear-gradient(to bottom, var(--color-main) 10%, var(--color-surface) 90%);
+/*
+The two rules of zatsit.fr, taken word for word.
+
+The selector targets `path` and not the element: the root of the SVG carries
+fill="currentColor", and it is the #logo-full-gradient def that has to win on
+each individual path.
+
+This is only correct because the SVG is a real element of the document. With a
+<use> pointing at a <symbol>, the selector would not reach the shadow tree and
+every path would fall back to black.
+*/
+.logo-full-gradient-glow path {
+    fill: url(#logo-full-gradient);
+}
+
+.logo-full-gradient-glow {
+    filter: drop-shadow(0 0 40px color-mix(in srgb, var(--color-main) 40%, transparent));
 }
 
 /* An emphasis in this deck means the accent colour, not italics. */
 em {
     font-style: normal;
     color: var(--color-main);
+}
+
+/*
+On the cover and the quotes, an emphasis takes the theme gradient and its
+glow -- the pattern of the zatsit.fr hero, which puts only the accented words
+in a gradient and leaves the rest of the title at full contrast.
+
+Everywhere else `em` stays the flat accent declared above, and deliberately so:
+on a working slide a run in background-clip:text stops responding to the
+display profiles, and that is the line we most want legible in a badly lit
+room.
+*/
+.slide-hero em {
+    background: var(--color-text-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px color-mix(in srgb, var(--color-main) 50%, transparent));
 }
 
 a,
