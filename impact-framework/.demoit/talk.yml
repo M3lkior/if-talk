@@ -10,11 +10,14 @@ theme:
 logos:
   - /images/zatsit_logo.svg
   - /images/logo.jpg
-# Dark-theme counterparts, in the same order as logos. While this list is
-# absent or empty the logos above serve in both themes, and no conditional
-# class is emitted at all. zatsit_logo_blanc.svg is already in images/ and
-# would be the first candidate; logo.jpg is a JPEG on an opaque white
-# background and needs a transparent version before it can go here.
-# logosDark:
-#   - /images/zatsit_logo_blanc.svg
-#   - /images/logo-dark.png
+# Dark-theme counterparts, and the order has to match logos above: in dark
+# mode every entry of that list is hidden and this one shown in its place, so
+# a shorter list here makes the missing logos disappear rather than fall back.
+#
+# logo.jpg is repeated as-is on purpose: it is a JPEG on an opaque white
+# background and has no dark variant yet. Repeating it keeps the partner on
+# the slide -- as a white plate, which reads as a logo rather than as a bug --
+# until a transparent version replaces it here.
+logosDark:
+  - /images/zatsit_logo_or.svg
+  - /images/logo.jpg
