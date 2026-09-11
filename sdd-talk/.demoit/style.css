@@ -1,0 +1,372 @@
+/*
+Copyright 2018 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+.title {
+    background: linear-gradient(to bottom, var(--color-main) 10%, white 90%);
+}
+
+#app {
+    background-color: white;
+}
+
+html, body, #top {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    font-size: 3vw;
+
+    --color-text: rgb(61, 64, 67);
+    --color-main: #0f15fd;
+    --primary: #0f15fd;
+}
+
+#progression {
+    background-color: #0f15fdd !important;
+}
+blockquote {
+    border-inline-start-color: var(--color-main) !important;
+}
+
+.xsmall-height {
+    block-size: 25rem !important;
+}
+.xsmall-width {
+    inline-size: 25rem !important;
+}
+
+blockquote h5 {
+    font-size: 2.1rem;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+}
+
+.xlarge-text {
+    font-size: 1.6rem !important;
+    line-height: normal;
+}
+.xlarge-height {
+    block-size: 64rem !important;
+}
+@media screen and (max-height: 1024px) {
+    .xlarge-height {
+        block-size: 45rem !important;
+    }
+}
+
+.full-width {
+    inline-size: 100% !important;
+    width: 100% !important;
+}
+
+body {
+    /*font-family: 'Poppins';font-size: 22px;*/
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+header {
+    background-color: transparent !important;
+    color: var(--color-main);
+    border-bottom: solid 1px var(--color-main);
+}
+#top {
+    position: relative;
+    background-color: white;
+    width: 100%;
+    height: calc(100vw * 9 / 16);
+    overflow: hidden;
+    text-align: center;
+}
+
+.logos {
+    width: 100%;
+    height: calc(100% - 14vw);
+    text-align: center;
+}
+
+img {
+    height: 75%;
+}
+
+.logos img {
+    margin-top: 4vw;
+}
+
+a, a:visited {
+    color: var(--color-main);
+    text-decoration: none;
+}
+
+split-view {
+    height: calc(100% - 14vw);
+    padding: 0 2vw;
+}
+
+em {
+    font-style: normal;
+    color: var(--color-main);
+}
+
+#progression {
+    position: absolute;
+    height: 6px;
+    /*bottom: calc((100vh - (100vw * 9 / 16)) / 2);*/
+    left: 0;
+    background-color: black;
+    border-radius: 0 3px 3px 0;
+    opacity: .4;
+}
+
+#qr {
+    position: absolute;
+    right: 1vw;
+    bottom: 1vw;
+    width: 15vw;
+    height: auto;
+}
+
+/* Speaker Notes window. */
+#speaker-notes {
+    display: table;
+    position: fixed;
+    width: 80%;
+    height: 80%;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    background-color: #EEEE;
+    margin: 10%;
+    border: 4px solid #CCC;
+    border-radius: 2rem;
+    padding: 2vw;
+    justify-content: center;
+    align-items: center;
+}
+
+#speaker-notes-contents {
+    /*font-size: 1.5vw !important;*/
+    display: table-cell;
+    vertical-align: middle;
+    line-height: normal;
+}
+
+#speaker-notes-progress {
+    position: fixed;
+    height: 3.5vw;
+    top: 1vw;
+    left: 1vw;
+    padding: 0.5vw;
+    background-color: #7CF;
+    font-size: 3vw;
+    font-weight: bold;
+    text-align: center;
+}
+
+#current-slide-title {
+    position: fixed;
+    height: 3.5vw;
+    top: 1vw;
+    left: 12vw;
+    padding: 0.5vw;
+    background-color: black;
+    color: #DDD;
+    font-size: 3vw;
+    font-weight: bold;
+    text-align: center;
+}
+
+.mermaid {
+    visibility: hidden;
+    height: calc(100% - 14vw);
+}
+
+.mermaid[data-processed="true"] {
+    visibility: visible;
+}
+
+.mermaid svg {
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.main {
+    height: 100%;
+}
+
+.main-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 150px 80px 20px;
+    margin-top: 30px;
+    color: #ffffff;
+    background-image: linear-gradient(180deg, var(--color-main) 0%, #2a0a89 100%);
+}
+
+.gb-shape-1 {
+    color: var(--base-2);
+    position: absolute;
+    overflow: hidden;
+    pointer-events: none;
+    line-height: 0;
+    left: 0;
+    right: 0;
+    top: -1px;
+    transform: scaleY(-1);
+}
+
+.poppins-thin {
+    font-family: "Poppins", sans-serif;
+    font-weight: 100;
+    font-style: normal;
+}
+
+.poppins-extralight {
+    font-family: "Poppins", sans-serif;
+    font-weight: 200;
+    font-style: normal;
+}
+
+.poppins-light {
+    font-family: "Poppins", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+}
+
+.poppins-regular {
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.poppins-medium {
+    font-family: "Poppins", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+.poppins-semibold {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-style: normal;
+}
+
+.poppins-bold {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.poppins-extrabold {
+    font-family: "Poppins", sans-serif;
+    font-weight: 800;
+    font-style: normal;
+}
+
+.poppins-black {
+    font-family: "Poppins", sans-serif;
+    font-weight: 900;
+    font-style: normal;
+}
+
+.poppins-thin-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 100;
+    font-style: italic;
+}
+
+.poppins-extralight-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 200;
+    font-style: italic;
+}
+
+.poppins-light-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 300;
+    font-style: italic;
+}
+
+.poppins-regular-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.poppins-medium-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.poppins-semibold-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-style: italic;
+}
+
+.poppins-bold-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-style: italic;
+}
+
+.poppins-extrabold-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 800;
+    font-style: italic;
+}
+
+.poppins-black-italic {
+    font-family: "Poppins", sans-serif;
+    font-weight: 900;
+    font-style: italic;
+}
+
+/* La phrase charnière du talk. Elle apparaît deux fois, à l'identique :
+   slide S5 (on la pose) et slide S30 (on la résout). Le traitement doit être
+   strictement le même sur les deux slides, sinon la salle ne voit pas que la
+   boucle se ferme. Ne styler qu'ici, jamais en inline sur une des deux. */
+blockquote.charniere {
+    border-inline-start: 8px solid var(--color-main);
+    background-color: #f4f4ff;
+    padding: 1.2rem 2rem;
+    margin: 0;
+    text-align: left;
+}
+
+/* La punchline domine : c'est elle qui porte le lien product engineer / SDD. */
+blockquote.charniere h4 {
+    font-size: 3rem;
+    line-height: 1.2;
+    margin: 0 0 0.8rem;
+    color: var(--color-main);
+    font-weight: 600;
+}
+
+/* L'explication reste lisible mais subordonnée. */
+blockquote.charniere h5 {
+    font-size: 1.9rem;
+    line-height: 1.35;
+    margin: 0;
+    font-weight: 400;
+    opacity: 0.8;
+}
