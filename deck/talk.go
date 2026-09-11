@@ -39,8 +39,32 @@ type Theme struct {
 	Dark bool `yaml:"dark"`
 }
 
+// Logo is one logo and the two themes it has to survive. White is the image a
+// light theme shows, Dark the one a dark theme shows.
+//
+// The pair is per logo rather than two parallel lists, and that is the point:
+// a list of light logos beside a list of dark ones only works while both have
+// the same length, so a partner with no dark variant had to be repeated in the
+// dark list to keep its place. Here it declares `white` alone and the layouts
+// show it in both themes -- which is also the old behaviour of a talk that
+// declared no dark logos at all, now available one logo at a time.
+type Logo struct {
+	// White is the image a light theme shows. A logo with nothing else is
+	// shown in both themes.
+	White string `yaml:"white"`
+	// Dark is the image a dark theme shows instead of White.
+	Dark string `yaml:"dark"`
+}
+
+// declared reports whether the logo names any image at all. An undeclared
+// eventLogo: block yields a zero Logo, which must render nothing rather than
+// an <img> with an empty src.
+func (l Logo) declared() bool {
+	return l.White != "" || l.Dark != ""
+}
+
 // Talk is the identity of a presentation, shared by all its localized decks.
-// It is read once from <folder>/.demoit/talk.yml and handed to every layout.
+// It is read once from <folder>/talk.yml and handed to every layout.
 type Talk struct {
 	// Title is the talk's title, rendered from talk.yml through the same
 	// Markdown pipeline as a slide's title: key -- so a cover can write
@@ -53,26 +77,51 @@ type Talk struct {
 	Subtitle template.HTML `yaml:"subtitle"`
 	// Layout is the layout slides use when they declare none.
 	Layout string `yaml:"layout"`
-	// Logos are the images the header and cover layouts display, in order.
-	Logos []string `yaml:"logos"`
-	// LogosDark are the dark-theme counterparts of Logos, in the same order.
-	// A talk that declares none renders Logos in both themes, which is what
-	// every talk did before this field existed -- the layouts emit the
-	// conditional class only when this list is non-empty.
-	LogosDark []string `yaml:"logosDark"`
+	// Logo is the speaker's own logo, the one every slide of the talk carries.
+	Logo Logo `yaml:"logo"`
+	// EventLogo is the logo of the event the talk is given at, shown beside
+	// Logo on the cover and in every header. Optional, and the only reason it
+	// is a field of its own rather than a second entry in a list: an event
+	// changes from one conference to the next while the speaker's logo does
+	// not, so a talk is re-pointed at a new event by filling one block.
+	EventLogo Logo `yaml:"eventLogo"`
 	// Footer is the text layouts may display at the bottom of a slide.
 	Footer string `yaml:"footer"`
 	// Theme is the rendering chassis the talk opts into.
 	Theme Theme `yaml:"theme"`
 }
 
-// LoadTalk reads <folder>/.demoit/talk.yml. A missing file is not an error: it
-// yields a Talk with the default layout and no logos, so that a talk can
-// consist of a single Markdown file.
+// Logos returns the logos a layout displays, in order: the speaker's own
+// first, then the event's when one is declared.
+//
+// Layouts range over this rather than testing the two fields themselves. They
+// are the one part of the rendering a talk is free to replace, so every logo
+// rule kept in a template is a rule a talk's override silently loses -- which
+// is exactly how impact-framework's default-h3 layout ended up showing no dark
+// logo at all. Here a layout writes one range and the decision stays in Go.
+func (t Talk) Logos() []Logo {
+	logos := make([]Logo, 0, 2)
+
+	for _, logo := range []Logo{t.Logo, t.EventLogo} {
+		if logo.declared() {
+			logos = append(logos, logo)
+		}
+	}
+
+	return logos
+}
+
+// LoadTalk reads <folder>/talk.yml. A missing file is not an error: it yields
+// a Talk with the default layout and no logos, so that a talk can consist of a
+// single Markdown file.
+//
+// At the folder's root rather than inside .demoit: it is the one file a
+// speaker edits by hand for reasons that have nothing to do with the browser,
+// and .demoit is otherwise the folder the server serves assets from.
 func LoadTalk(folder string) (Talk, error) {
 	talk := Talk{Layout: "default"}
 
-	content, err := os.ReadFile(filepath.Join(folder, ".demoit", "talk.yml"))
+	content, err := os.ReadFile(filepath.Join(folder, "talk.yml"))
 	if errors.Is(err, fs.ErrNotExist) {
 		return talk, nil
 	}
@@ -81,7 +130,7 @@ func LoadTalk(folder string) (Talk, error) {
 	}
 
 	if err := yaml.Unmarshal(content, &talk); err != nil {
-		return talk, fmt.Errorf("unable to parse .demoit/talk.yml: %w", err)
+		return talk, fmt.Errorf("unable to parse talk.yml: %w", err)
 	}
 
 	// Rendered after the parse rather than during it: yaml puts the raw

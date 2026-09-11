@@ -13,7 +13,10 @@ func TestLayoutsRenderTheEmbeddedDefault(t *testing.T) {
 	t.Parallel()
 
 	slide := deck.Slide{
-		Talk:    deck.Talk{Logos: []string{"/images/a.svg", "/images/b.jpg"}},
+		Talk: deck.Talk{
+			Logo:      deck.Logo{White: "/images/a.svg"},
+			EventLogo: deck.Logo{White: "/images/b.jpg"},
+		},
 		Title:   "L'impact du numérique",
 		Source:  "https://www.arcep.fr/",
 		Content: "<h2>2,5%</h2>",
@@ -39,13 +42,12 @@ func TestLayoutsRenderTheEmbeddedDefault(t *testing.T) {
 	}
 }
 
-// Without logosDark, no conditional class is emitted: a talk that declares no
-// dark variant must render exactly as it did before this field existed, in
-// both themes. That is what protects sample/ and every existing talk.
-func TestHeaderLogosCarryNoThemeClassWithoutDarkLogos(t *testing.T) {
+// A logo with no dark variant carries no conditional class: it is one image
+// meant for either ground, and it must show in both themes.
+func TestHeaderLogoCarriesNoThemeClassWithoutADarkVariant(t *testing.T) {
 	t.Parallel()
 
-	slide := deck.Slide{Talk: deck.Talk{Logos: []string{"/images/a.svg"}}}
+	slide := deck.Slide{Talk: deck.Talk{Logo: deck.Logo{White: "/images/a.svg"}}}
 
 	got, err := deck.NewLayouts(t.TempDir()).Execute("default", slide)
 	if err != nil {
@@ -56,18 +58,18 @@ func TestHeaderLogosCarryNoThemeClassWithoutDarkLogos(t *testing.T) {
 		t.Errorf("got %q, want it to contain the logo", got)
 	}
 	if strings.Contains(string(got), "dark:hidden") {
-		t.Errorf("got %q, want no dark:hidden when the talk declares no dark logos", got)
+		t.Errorf("got %q, want no dark:hidden when the logo declares no dark variant", got)
 	}
 }
 
-// With logosDark, both sets are emitted and the swap is left to CSS: nothing
-// on the Go side knows the current theme, which the browser alone decides.
-func TestHeaderEmitsBothLogoSetsWithDarkLogos(t *testing.T) {
+// With both variants, both images are emitted and the swap is left to CSS:
+// nothing on the Go side knows the current theme, which the browser alone
+// decides.
+func TestHeaderEmitsBothVariantsOfALogo(t *testing.T) {
 	t.Parallel()
 
 	slide := deck.Slide{Talk: deck.Talk{
-		Logos:     []string{"/images/a.svg"},
-		LogosDark: []string{"/images/a-dark.svg"},
+		Logo: deck.Logo{White: "/images/a.svg", Dark: "/images/a-dark.svg"},
 	}}
 
 	got, err := deck.NewLayouts(t.TempDir()).Execute("default", slide)
@@ -81,6 +83,63 @@ func TestHeaderEmitsBothLogoSetsWithDarkLogos(t *testing.T) {
 		`src="/images/a-dark.svg"`,
 		"hidden dark:block",
 	} {
+		if !strings.Contains(string(got), want) {
+			t.Errorf("got %q, want it to contain %q", got, want)
+		}
+	}
+}
+
+// The variants are paired per logo, not across two lists: an event logo with
+// no dark variant must not take the speaker logo's conditional class and
+// vanish in dark mode. This is the case the two parallel lists could not
+// express, and the reason the shape changed.
+func TestHeaderPairsTheVariantsPerLogo(t *testing.T) {
+	t.Parallel()
+
+	slide := deck.Slide{Talk: deck.Talk{
+		Logo:      deck.Logo{White: "/images/me.svg", Dark: "/images/me-dark.svg"},
+		EventLogo: deck.Logo{White: "/images/event.jpg"},
+	}}
+
+	got, err := deck.NewLayouts(t.TempDir()).Execute("default", slide)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if !strings.Contains(string(got), `<img class="size-12 rounded-full object-cover" src="/images/event.jpg">`) {
+		t.Errorf("got %q, want the event logo emitted with no theme class", got)
+	}
+	if !strings.Contains(string(got), `src="/images/me-dark.svg"`) {
+		t.Errorf("got %q, want the speaker's dark variant", got)
+	}
+}
+
+// The logos are a talk.yml matter, so every layout that shows them goes
+// through the shared partial. default-h3 is impact-framework's own layout and
+// used to spell the markup out, which is how it ended up with no dark variant
+// while every other header had one.
+func TestATalkLayoutRendersTheSharedLogosPartial(t *testing.T) {
+	t.Parallel()
+
+	folder := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(folder, ".demoit", "layouts"), 0o755); err != nil {
+		t.Fatalf("unable to create the layouts folder: %v", err)
+	}
+	layout := `<header>{{ template "logos" . }}</header><main>{{ .Content }}</main>`
+	if err := os.WriteFile(filepath.Join(folder, ".demoit", "layouts", "own.html"), []byte(layout), 0o600); err != nil {
+		t.Fatalf("unable to write the layout: %v", err)
+	}
+
+	slide := deck.Slide{Talk: deck.Talk{
+		Logo: deck.Logo{White: "/images/a.svg", Dark: "/images/a-dark.svg"},
+	}}
+
+	got, err := deck.NewLayouts(folder).Execute("own", slide)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	for _, want := range []string{`src="/images/a.svg"`, `src="/images/a-dark.svg"`} {
 		if !strings.Contains(string(got), want) {
 			t.Errorf("got %q, want it to contain %q", got, want)
 		}

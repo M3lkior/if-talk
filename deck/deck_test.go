@@ -31,8 +31,8 @@ func TestLoadRendersAMarkdownDeck(t *testing.T) {
 	t.Parallel()
 
 	folder := writeDeck(t, map[string]string{
-		".demoit/talk.yml": "logos: [/images/a.svg]\n",
-		"demoit.md":        "---\nlayout: cover\n---\n# Impact Framework\n\n---\ntitle: Les chiffres\nsource: https://arcep.fr\n---\n**2,5%** des émissions.\n\n:::speakernotes\nADEME\n:::\n",
+		"talk.yml":  "logo:\n  white: /images/a.svg\n",
+		"demoit.md": "---\nlayout: cover\n---\n# Impact Framework\n\n---\ntitle: Les chiffres\nsource: https://arcep.fr\n---\n**2,5%** des émissions.\n\n:::speakernotes\nADEME\n:::\n",
 	})
 
 	slides, err := deck.Load(folder, "")

@@ -155,16 +155,26 @@ Attribute values are `key=value`, separated by spaces; wrap a value that contain
  + `:::split{...}` puts its content side by side. `height=` alone gives an auto-arranged split, the same one the `split` layout produces; add `cols=4,8` (one weight per pane, out of 12) for explicit column widths — each weight has to be a whole number from 1 to 12, and a `lines=` range has to be two numbers, or the slide reports the mistake instead of rendering it. Leave a **blank line** between panes when using `cols=` — the columns are counted one per paragraph/block, so two panes glued together without a blank line count as a single, wider pane and the widths won't line up.
  + `:::window{title=}` frames its content like a little macOS window; `:::speakernotes` marks content as speaker notes (the `speakernotes:` frontmatter key is the simpler way to do the same thing).
 
-### `.demoit/talk.yml`
+### `talk.yml`
+
+At the root of the presentation folder, beside `demoit.md` — not inside `.demoit/`, which is the folder the server serves assets from.
 
 ```yaml
 layout: default
-logos:
-  - /images/logo.svg
-  - /images/logo2.jpg
+title: A la découverte d'*Impact Framework*.
+subtitle: 10 avril 2025 — Ludovic Dussart
+logo:
+  white: /images/logo.svg
+  dark: /images/logo-dark.svg
+eventLogo:
+  white: /images/event.svg
 ```
 
-`layout` is the deck-wide default every slide falls back to when its own frontmatter names none. `logos` are shown in the header of `default`, `content`, `quote` and `split` (`bare` has no header, so it shows none), and separately again in `cover`'s own logo grid. `title` and `footer` also parse without error, but nothing in the shipped layouts currently reads either one — set them and nothing will change on screen.
+`layout` is the deck-wide default every slide falls back to when its own frontmatter names none.
+
+`logo` is the speaker's own logo and `eventLogo`, which is optional, the logo of the event the talk is given at. Both are shown in the header of `default`, `content`, `quote` and `split` (`bare` has no header, so it shows none) and again, larger, on `cover`. Each takes two images: `white` is what a light theme shows and `dark` what a dark theme shows. **A logo that declares only `white` is shown in both themes** — which is what you want for a logo that works on either ground, and the only thing to write for an event whose asset comes as a single file.
+
+`title` and `subtitle` are the cover's heading and byline. Both go through the same Markdown renderer as a slide's `title:`, so `*Impact Framework*` puts those words in an `<em>` and takes the accent treatment. `footer` still parses without error, but nothing in the shipped layouts reads it — set it and nothing changes on screen.
 
 ## Contribute
 

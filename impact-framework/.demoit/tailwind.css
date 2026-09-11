@@ -117,10 +117,6 @@
     margin-top: calc(var(--spacing, .25rem) * 12);
   }
 
-  .mt-16 {
-    margin-top: calc(var(--spacing, .25rem) * 16);
-  }
-
   .mb-0 {
     margin-bottom: 0;
   }
@@ -135,10 +131,6 @@
 
   .grid {
     display: grid;
-  }
-
-  .hidden {
-    display: none;
   }
 
   .table {
@@ -156,10 +148,6 @@
 
   .h-12 {
     height: calc(var(--spacing, .25rem) * 12);
-  }
-
-  .h-24 {
-    height: calc(var(--spacing, .25rem) * 24);
   }
 
   .h-48 {
@@ -202,16 +190,8 @@
     width: 40rem;
   }
 
-  .w-auto {
-    width: auto;
-  }
-
   .w-full {
     width: 100%;
-  }
-
-  .max-w-\[16rem\] {
-    max-width: 16rem;
   }
 
   .max-w-\[70\%\] {
@@ -247,6 +227,10 @@
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
+  .grid-rows-\[auto_1fr\] {
+    grid-template-rows: auto 1fr;
+  }
+
   .flex-col {
     flex-direction: column;
   }
@@ -267,8 +251,8 @@
     gap: calc(var(--spacing, .25rem) * 8);
   }
 
-  .gap-16 {
-    gap: calc(var(--spacing, .25rem) * 16);
+  .gap-12 {
+    gap: calc(var(--spacing, .25rem) * 12);
   }
 
   .rounded-card {
@@ -363,14 +347,6 @@
   .shadow {
     --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
-  }
-
-  .dark\:block:where(.dark, .dark *) {
-    display: block;
-  }
-
-  .dark\:hidden:where(.dark, .dark *) {
-    display: none;
   }
 
   .\[\&_tbody_tr\:not\(\:last-child\)_td\]\:border-b tbody tr:not(:last-child) td {

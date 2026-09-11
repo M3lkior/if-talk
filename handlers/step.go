@@ -55,7 +55,7 @@ type Page struct {
 	CurrentStep int
 	StepCount   int
 	DevMode     bool
-	// Stage and Dark come from the talk's .demoit/talk.yml theme block. They
+	// Stage and Dark come from the talk's talk.yml theme block. They
 	// gate the fixed stage and the theme switcher, so a talk that declares
 	// neither renders exactly as it did before the chassis existed.
 	Stage bool

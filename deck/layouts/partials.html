@@ -13,19 +13,40 @@
      The <nav> is gone: beercss gave it `display:flex; align-items:center;
      gap:1rem`, which slide-header now carries directly, and the grid wrapper
      around the logos was never a useful grid. */}}
+{{/* The logos of the talk, and the only place any layout writes one.
+
+     Talk.Logos returns the speaker's logo followed by the event's when
+     talk.yml declares one, so a layout never tests those two fields itself --
+     a rule kept in a template is a rule a talk's own layout loses the day it
+     overrides that file.
+
+     Both images of a logo are emitted and CSS picks one: nothing on the Go
+     side knows the current theme, which the browser alone decides. The
+     {{ if .Dark }} is the whole mechanism, and it is per logo -- a logo that
+     declares no dark variant carries no conditional class at all and shows in
+     both themes, which is what an event whose logo works on either ground
+     wants. */}}
+{{/* `if` rather than `with` throughout: `with` rebinds the dot to the string
+     it tests, and `$` is the root Slide, not the logo -- so the pair would
+     have no way left to name the other half of itself. */}}
+{{ define "logos" }}<div class="flex items-center gap-4">
+    {{ range .Talk.Logos }}{{ if .White }}<img class="size-12 rounded-full object-cover{{ if .Dark }} dark:hidden{{ end }}" src="{{ .White }}">
+    {{ end }}{{ if .Dark }}<img class="size-12 rounded-full object-cover hidden dark:block" src="{{ .Dark }}">
+    {{ end }}{{ end }}
+</div>{{ end }}
+
+{{/* The same logos at the size a cover shows them: 6rem tall, and wide as
+     they come rather than boxed into a square, because object-contain inside
+     a square left wide gaps on either side of a wide logo. */}}
+{{ define "coverLogos" }}<div class="mt-16 flex items-center justify-center gap-16">
+    {{ range .Talk.Logos }}{{ if .White }}<img class="h-24 w-auto max-w-[16rem] object-contain{{ if .Dark }} dark:hidden{{ end }}" src="{{ .White }}" loading="lazy">
+    {{ end }}{{ if .Dark }}<img class="hidden h-24 w-auto max-w-[16rem] object-contain dark:block" src="{{ .Dark }}" loading="lazy">
+    {{ end }}{{ end }}
+</div>{{ end }}
+
 {{ define "header" }}<header class="slide-header">
     <h2 class="flex-1 m-0 text-left">{{ .Title }}</h2>
-    {{/* Both sets are emitted and CSS picks one: nothing here knows the
-         current theme, which the browser alone decides. The {{ if }} is the
-         whole mechanism -- without logosDark no conditional class is written
-         at all, so a talk that declares no dark variant renders exactly as it
-         did before the field existed. $ is the root context, the Slide, since
-         . is rebound to the current element inside a range. */}}
-    <div class="flex items-center gap-4">
-        {{ range .Talk.Logos }}<img class="size-12 rounded-full object-cover{{ if $.Talk.LogosDark }} dark:hidden{{ end }}" src="{{ . }}">
-        {{ end }}{{ range .Talk.LogosDark }}<img class="size-12 rounded-full object-cover hidden dark:block" src="{{ . }}">
-        {{ end }}
-    </div>
+    {{ template "logos" . }}
 </header>
 {{ end }}
 

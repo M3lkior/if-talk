@@ -1,0 +1,24 @@
+layout: default
+title: A la découverte d'*Impact Framework*.
+subtitle: 10 avril 2025 — Ludovic Dussart
+theme:
+  # The fixed 1920x1080 stage, scaled to fit whatever it is projected on.
+  stage: true
+  # Renders the theme switcher: t toggles light/dark, d cycles the display
+  # profile (screen / tv / projector).
+  dark: true
+# The speaker's own logo, on the cover and in every slide header. `white` is
+# what a light theme shows, `dark` what a dark theme shows.
+logo:
+  white: /images/zatsit_logo.svg
+  dark: /images/zatsit_logo_or.svg
+
+# The event this talk is given at, shown beside the logo above. Optional:
+# comment the block out and the slides carry the zatsit logo alone.
+#
+# Only `white` here, and that is not an omission: logo.jpg is a JPEG on an
+# opaque white background with no dark variant yet. A logo that declares one
+# image is shown in both themes -- as a white plate, which reads as a logo
+# rather than as a bug -- until a transparent version replaces it.
+eventLogo:
+  white: /images/logo.jpg

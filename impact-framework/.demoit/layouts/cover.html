@@ -28,7 +28,7 @@
         <path d="m182.8,372.99c0,18.04-14.81,32.66-33.07,32.66s-33.07-14.62-33.07-32.66,14.81-32.66,33.07-32.66,33.07,14.62,33.07,32.66m17.93,50.49v-50.49h-.04c-.47-27.02-23.09-48.79-50.96-48.79s-51,22.22-51,49.64,22.83,49.64,51,49.64c12.63,0,24.17-4.49,33.07-11.9v11.9h17.93Z"/>
     </svg>
 
-    {{/* Both come from .demoit/talk.yml, already rendered as Markdown, so the
+    {{/* Both come from talk.yml, already rendered as Markdown, so the
          *emphasis* of the title lands on the gradient treatment slide-hero
          gives an <em>. */}}
     {{ with .Talk.Title }}<h1 class="mt-12 mb-0 text-6xl leading-tight font-bold tracking-tight">{{ . }}</h1>
@@ -39,14 +39,10 @@
          talk.yml has no business carrying. Empty today. */}}
     {{ .Content }}
 
-    {{/* 6rem tall rather than the 25rem squares this used to render: the
-         zatsit lockup now holds the top of the slide, and these go back to
-         being a footnote. w-auto rather than a square, because object-contain
-         inside a square box left wide gaps on either side of a wide logo. */}}
-    <div class="mt-16 flex items-center justify-center gap-16">
-        {{ range .Talk.Logos }}<img class="h-24 w-auto max-w-[16rem] object-contain{{ if $.Talk.LogosDark }} dark:hidden{{ end }}" src="{{ . }}" loading="lazy">
-        {{ end }}{{ range .Talk.LogosDark }}<img class="hidden h-24 w-auto max-w-[16rem] object-contain dark:block" src="{{ . }}" loading="lazy">
-        {{ end }}
-    </div>
+    {{/* A footnote under the lockup, which now holds the top of the slide.
+         The markup is the engine's "coverLogos" partial: this file overrides
+         the cover, not the logos, and talk.yml is the only thing that decides
+         which ones appear. */}}
+    {{ template "coverLogos" . }}
 </main>
 {{ template "notes" . }}

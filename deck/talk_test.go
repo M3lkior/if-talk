@@ -8,16 +8,13 @@ import (
 	"github.com/dgageot/demoit/deck"
 )
 
-// writeTalk writes a .demoit/talk.yml into a fresh folder and returns it.
+// writeTalk writes a talk.yml into a fresh folder and returns it.
 func writeTalk(t *testing.T, content string) string {
 	t.Helper()
 
 	folder := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(folder, ".demoit"), 0o755); err != nil {
-		t.Fatalf("unable to create .demoit: %v", err)
-	}
 	if content != "" {
-		path := filepath.Join(folder, ".demoit", "talk.yml")
+		path := filepath.Join(folder, "talk.yml")
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			t.Fatalf("unable to write talk.yml: %v", err)
 		}
@@ -26,10 +23,34 @@ func writeTalk(t *testing.T, content string) string {
 	return folder
 }
 
+// The file sits at the folder's root. A copy left at the old .demoit/talk.yml
+// is not read, and silently keeping a talk on stale settings is worse than
+// showing it the defaults, so this pins the one location that counts.
+func TestLoadTalkIgnoresTheOldDemoitLocation(t *testing.T) {
+	t.Parallel()
+
+	folder := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(folder, ".demoit"), 0o755); err != nil {
+		t.Fatalf("unable to create .demoit: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(folder, ".demoit", "talk.yml"), []byte("layout: content\n"), 0o600); err != nil {
+		t.Fatalf("unable to write talk.yml: %v", err)
+	}
+
+	talk, err := deck.LoadTalk(folder)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if got, want := talk.Layout, "default"; got != want {
+		t.Errorf("got layout %q, want %q — .demoit/talk.yml must not be read", got, want)
+	}
+}
+
 func TestLoadTalkReadsEveryKey(t *testing.T) {
 	t.Parallel()
 
-	folder := writeTalk(t, "title: Impact Framework\nlayout: content\nlogos:\n  - /images/a.svg\n  - /images/b.jpg\nfooter: adapted from demoit\n")
+	folder := writeTalk(t, "title: Impact Framework\nlayout: content\nlogo:\n  white: /images/a.svg\n  dark: /images/a-dark.svg\neventLogo:\n  white: /images/b.jpg\nfooter: adapted from demoit\n")
 
 	talk, err := deck.LoadTalk(folder)
 	if err != nil {
@@ -42,11 +63,50 @@ func TestLoadTalkReadsEveryKey(t *testing.T) {
 	if got, want := talk.Layout, "content"; got != want {
 		t.Errorf("got layout %q, want %q", got, want)
 	}
-	if got, want := len(talk.Logos), 2; got != want {
-		t.Errorf("got %d logos, want %d", got, want)
+	if got, want := talk.Logo.White, "/images/a.svg"; got != want {
+		t.Errorf("got logo %q, want %q", got, want)
+	}
+	if got, want := talk.Logo.Dark, "/images/a-dark.svg"; got != want {
+		t.Errorf("got dark logo %q, want %q", got, want)
+	}
+	if got, want := talk.EventLogo.White, "/images/b.jpg"; got != want {
+		t.Errorf("got event logo %q, want %q", got, want)
 	}
 	if got, want := talk.Footer, "adapted from demoit"; got != want {
 		t.Errorf("got footer %q, want %q", got, want)
+	}
+}
+
+// The order is the one the slides show: the speaker's logo, then the event's.
+func TestLogosListsTheSpeakerThenTheEvent(t *testing.T) {
+	t.Parallel()
+
+	talk := deck.Talk{
+		Logo:      deck.Logo{White: "/images/me.svg"},
+		EventLogo: deck.Logo{White: "/images/event.svg"},
+	}
+
+	logos := talk.Logos()
+	if got, want := len(logos), 2; got != want {
+		t.Fatalf("got %d logos, want %d", got, want)
+	}
+	if got, want := logos[0].White, "/images/me.svg"; got != want {
+		t.Errorf("got first logo %q, want %q", got, want)
+	}
+	if got, want := logos[1].White, "/images/event.svg"; got != want {
+		t.Errorf("got second logo %q, want %q", got, want)
+	}
+}
+
+// An undeclared eventLogo: block yields a zero Logo, which must be dropped
+// rather than rendered as an <img> with an empty src.
+func TestLogosDropsAnUndeclaredEventLogo(t *testing.T) {
+	t.Parallel()
+
+	talk := deck.Talk{Logo: deck.Logo{White: "/images/me.svg"}}
+
+	if got, want := len(talk.Logos()), 1; got != want {
+		t.Fatalf("got %d logos, want %d", got, want)
 	}
 }
 
@@ -91,21 +151,23 @@ func TestLoadTalkLeavesAnAbsentTitleEmpty(t *testing.T) {
 	}
 }
 
-func TestLoadTalkReadsTheDarkLogos(t *testing.T) {
+// A logo declaring only `white` is legal and means "this one image works on
+// either ground": the layouts then emit it once, with no conditional class.
+func TestLoadTalkAcceptsALogoWithNoDarkVariant(t *testing.T) {
 	t.Parallel()
 
-	folder := writeTalk(t, "logos:\n  - /images/a.svg\nlogosDark:\n  - /images/a-dark.svg\n")
+	folder := writeTalk(t, "eventLogo:\n  white: /images/event.jpg\n")
 
 	talk, err := deck.LoadTalk(folder)
 	if err != nil {
 		t.Fatalf("got error %v, want none", err)
 	}
 
-	if got, want := len(talk.LogosDark), 1; got != want {
-		t.Fatalf("got %d dark logos, want %d", got, want)
+	if got, want := talk.EventLogo.White, "/images/event.jpg"; got != want {
+		t.Errorf("got event logo %q, want %q", got, want)
 	}
-	if got, want := talk.LogosDark[0], "/images/a-dark.svg"; got != want {
-		t.Errorf("got dark logo %q, want %q", got, want)
+	if talk.EventLogo.Dark != "" {
+		t.Errorf("got dark variant %q, want none", talk.EventLogo.Dark)
 	}
 }
 
@@ -120,8 +182,8 @@ func TestLoadTalkAcceptsAMissingFile(t *testing.T) {
 	if got, want := talk.Layout, "default"; got != want {
 		t.Errorf("got layout %q, want %q", got, want)
 	}
-	if len(talk.Logos) != 0 {
-		t.Errorf("got %d logos, want none", len(talk.Logos))
+	if len(talk.Logos()) != 0 {
+		t.Errorf("got %d logos, want none", len(talk.Logos()))
 	}
 }
 
