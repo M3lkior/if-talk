@@ -1,4 +1,6 @@
 layout: default
+title: A la découverte d'*Impact Framework*.
+subtitle: 10 avril 2025 — Ludovic Dussart
 theme:
   # The fixed 1920x1080 stage, scaled to fit whatever it is projected on.
   stage: true
@@ -8,3 +10,11 @@ theme:
 logos:
   - /images/zatsit_logo.svg
   - /images/logo.jpg
+# Dark-theme counterparts, in the same order as logos. While this list is
+# absent or empty the logos above serve in both themes, and no conditional
+# class is emitted at all. zatsit_logo_blanc.svg is already in images/ and
+# would be the first candidate; logo.jpg is a JPEG on an opaque white
+# background and needs a transparent version before it can go here.
+# logosDark:
+#   - /images/zatsit_logo_blanc.svg
+#   - /images/logo-dark.png

@@ -1,10 +1,6 @@
 ---
 layout: cover
-class: slide-main flex flex-col items-center justify-center text-center title
 ---
-
-<h1 class="m-0" style="color: white">A la découverte d'Impact Framework.</h1>
-<h3 style="color: white">10 Avril 2025</h3>
 
 ---
 title: L'impact du numérique

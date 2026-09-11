@@ -139,9 +139,23 @@ so French needs both.
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* The cover's gradient plate. */
-.title {
-    background: linear-gradient(to bottom, var(--color-main) 10%, var(--color-surface) 90%);
+/*
+The two rules of zatsit.fr, taken word for word.
+
+The selector targets `path` and not the element: the root of the SVG carries
+fill="currentColor", and it is the #logo-full-gradient def that has to win on
+each individual path.
+
+This is only correct because the SVG is a real element of the document. With a
+<use> pointing at a <symbol>, the selector would not reach the shadow tree and
+every path would fall back to black.
+*/
+.logo-full-gradient-glow path {
+    fill: url(#logo-full-gradient);
+}
+
+.logo-full-gradient-glow {
+    filter: drop-shadow(0 0 40px color-mix(in srgb, var(--color-main) 40%, transparent));
 }
 
 /* An emphasis in this deck means the accent colour, not italics. */
