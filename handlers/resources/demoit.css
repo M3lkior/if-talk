@@ -357,6 +357,10 @@
     position: fixed;
   }
 
+  .slide-hero {
+    position: relative;
+  }
+
   .contact-row {
     text-align: start;
     grid-column: span 4 / span 4;
@@ -694,6 +698,15 @@ body {
   opacity: var(--decor-mesh);
   -webkit-mask-image: linear-gradient(#000 60%, #0000 100%);
   mask-image: linear-gradient(#000 60%, #0000 100%);
+}
+
+.stage:has(main.slide-hero) {
+  --decor-dots: .1;
+  --decor-mesh: .45;
+}
+
+.dark .stage:has(main.slide-hero) {
+  --decor-mesh: .26;
 }
 
 .stage.stage-maximized {

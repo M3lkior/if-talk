@@ -35,7 +35,7 @@ should not have to re-emit the chassis from its own sheet, and an @utility is
 otherwise emitted only where it is seen -- so reordering a layout could silently
 drop one.
 */
-@source inline("slide-main slide-narrow slide-header slide-footer slide-prose contact-row card");
+@source inline("slide-main slide-narrow slide-header slide-footer slide-prose contact-row card slide-hero");
 
 /*
 deck/directive builds these class names in Go (transform.go toGrid, render.go
@@ -332,6 +332,22 @@ them is a permanent cost for an effect nobody looks at.
     opacity: var(--decor-mesh);
     mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+/*
+The cover and the quotes push both layers.
+
+:has() rather than a class on .stage: a layout cannot reach its own container,
+which is written in index.tmpl.html and belongs to the engine. The selector is
+supported by every targeted browser, the chromedp of /pdf included.
+*/
+.stage:has(main.slide-hero) {
+    --decor-dots: 0.1;
+    --decor-mesh: 0.45;
+}
+
+.dark .stage:has(main.slide-hero) {
+    --decor-mesh: 0.26;
 }
 
 /*

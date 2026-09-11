@@ -150,6 +150,24 @@ em {
     color: var(--color-main);
 }
 
+/*
+On the cover and the quotes, an emphasis takes the theme gradient and its
+glow -- the pattern of the zatsit.fr hero, which puts only the accented words
+in a gradient and leaves the rest of the title at full contrast.
+
+Everywhere else `em` stays the flat accent declared above, and deliberately so:
+on a working slide a run in background-clip:text stops responding to the
+display profiles, and that is the line we most want legible in a badly lit
+room.
+*/
+.slide-hero em {
+    background: var(--color-text-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px color-mix(in srgb, var(--color-main) 50%, transparent));
+}
+
 a,
 a:visited {
     color: var(--color-main);

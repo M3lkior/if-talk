@@ -1,4 +1,4 @@
-<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main flex flex-col items-center justify-center text-center{{ end }}">
+<main class="{{ if .Class }}{{ .Class }}{{ else }}slide-main slide-hero flex flex-col items-center justify-center text-center{{ end }}">
 {{ .Content }}
 {{/* The stacked large-space spacers and the s12/m6/l6 grid are one flex row:
      the grid was never doing grid work, and a fixed stage has one width, so
