@@ -168,6 +168,13 @@ geometry value, so a profile cannot break a layout.
     --weight-thin: 400;
     --color-fg: #000000;
     --color-fg-muted: #2a2d30;
+
+    /* The decor goes out in a badly lit room. This stays within the contract
+       of a display profile -- the opacity of a purely decorative layer cannot
+       move a box -- and it hands the text back the contrast the profile is
+       there to raise in the first place. */
+    --decor-dots: 0;
+    --decor-mesh: 0;
 }
 
 /*
@@ -267,6 +274,64 @@ which the document can scroll.
     flex-direction: column;
     overflow: hidden;
     background-color: var(--color-surface);
+
+    /* The stage must create a stacking context under every circumstance, so
+       that the negative z-index of the decor below stays bounded to it. Its
+       own transform already creates one -- but .stage-maximized sets transform
+       to none, and the decor would then fall behind the stage's background. */
+    isolation: isolate;
+}
+
+/*
+The decor, taken from zatsit.fr: the dot grid of its .dot-grid and the mesh
+gradient of its .hero-gradient.
+
+On the stage rather than on the slides, and that is the point: no slide's
+markup mentions it, no layout has to know about it, and it cannot shift any
+geometry. .stage is already overflow:hidden, so nothing spills.
+
+The site's floating blobs are deliberately absent. This deck runs ttys and
+live iframes for three quarters of an hour, and an animated blur(80px) beside
+them is a permanent cost for an effect nobody looks at.
+*/
+.stage::before,
+.stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /*
+    Negative, and that is what keeps the rest untouched. A child at a negative
+    z-index paints above the background of its stacking context and below the
+    in-flow content, so the decor slips between the stage's background and the
+    slides without a single child having to be repositioned.
+
+    At z-index 0 the children would have needed raising with a
+    `.stage > * { position: relative }` -- which would override the
+    `position: absolute` of .slide-footer, an unlayered rule beating an
+    @utility in @layer utilities. The slide footer would come back into the
+    flow, and the progress bar with it.
+    */
+    z-index: -1;
+    /* These layers cover the whole stage and would otherwise swallow the
+       clicks meant for the panes. */
+    pointer-events: none;
+}
+
+.stage::before {
+    background-image: radial-gradient(var(--color-main) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: var(--decor-dots);
+}
+
+.stage::after {
+    background:
+        radial-gradient(ellipse 80% 50% at 20% -20%, var(--color-accent-1), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 0%, var(--color-main), transparent 50%),
+        radial-gradient(ellipse 50% 60% at 0% 100%, var(--color-accent-3), transparent 50%),
+        radial-gradient(ellipse 70% 50% at 100% 80%, var(--color-accent-2), transparent 50%);
+    opacity: var(--decor-mesh);
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
 /*

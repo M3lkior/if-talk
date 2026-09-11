@@ -27,6 +27,9 @@
     --color-fg-muted: #475569;
     --color-surface: #fff;
     --color-outline: #cbd5e1;
+    --color-accent-1: #06b6d4;
+    --color-accent-2: #3b82f6;
+    --color-accent-3: #6366f1;
     --color-void: #000;
     --height-stage-small: 40%;
     --height-stage-medium: 65%;
@@ -615,6 +618,8 @@
   --weight-thin: 400;
   --color-fg: #000;
   --color-fg-muted: #2a2d30;
+  --decor-dots: 0;
+  --decor-mesh: 0;
 }
 
 .dark {
@@ -661,12 +666,34 @@ body {
   transform: translate(var(--stage-x, 0px), var(--stage-y, 0px)) scale(var(--stage-scale, 1));
   transform-origin: 0 0;
   background-color: var(--color-surface);
+  isolation: isolate;
   flex-direction: column;
   display: flex;
   position: absolute;
   inset-block-start: 0;
   inset-inline-start: 0;
   overflow: hidden;
+}
+
+.stage:before, .stage:after {
+  content: "";
+  z-index: -1;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.stage:before {
+  background-image: radial-gradient(var(--color-main) 1px, transparent 1px);
+  opacity: var(--decor-dots);
+  background-size: 32px 32px;
+}
+
+.stage:after {
+  background: radial-gradient(ellipse 80% 50% at 20% -20%, var(--color-accent-1), transparent 50%), radial-gradient(ellipse 60% 40% at 80% 0%, var(--color-main), transparent 50%), radial-gradient(ellipse 50% 60% at 0% 100%, var(--color-accent-3), transparent 50%), radial-gradient(ellipse 70% 50% at 100% 80%, var(--color-accent-2), transparent 50%);
+  opacity: var(--decor-mesh);
+  -webkit-mask-image: linear-gradient(#000 60%, #0000 100%);
+  mask-image: linear-gradient(#000 60%, #0000 100%);
 }
 
 .stage.stage-maximized {
