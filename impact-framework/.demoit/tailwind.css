@@ -223,7 +223,7 @@
   }
 
   .rounded-card {
-    border-radius: var(--radius-card, 2rem);
+    border-radius: var(--radius-card, .75rem);
   }
 
   .rounded-full {
@@ -283,7 +283,7 @@
   }
 
   .\[\&_tbody_tr\:not\(\:last-child\)_td\]\:border-outline tbody tr:not(:last-child) td {
-    border-color: var(--color-outline, #d5d7da);
+    border-color: var(--color-outline, #cbd5e1);
   }
 
   .\[\&_td\]\:p-0 td, .\[\&_th\]\:p-0 th {

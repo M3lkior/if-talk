@@ -136,6 +136,21 @@ geometry value, so a profile cannot break a layout.
     --dm-code-fg: #212121;
     --dm-code-selection: #bfd6ff;
 
+    /*
+    A linear-gradient, not a colour, so it is declared here rather than in
+    @theme: the --color-* prefix is Tailwind's colour namespace and would
+    generate bg-/text- utilities backed by a gradient, which is not a colour
+    and would never work. Read by the `em` treatment of slide-hero.
+    */
+    --color-text-gradient: linear-gradient(to bottom, #0f15fd 0%, #020466 100%);
+
+    /*
+    Opacity of the two decor layers of the stage, one token each rather than
+    one for both: the site lowers its mesh in dark mode and leaves its dot
+    grid alone.
+    */
+    --decor-dots: 0.08;
+    --decor-mesh: 0.3;
 }
 
 :root[data-display="tv"] {
@@ -155,20 +170,47 @@ geometry value, so a profile cannot break a layout.
     --color-fg-muted: #2a2d30;
 }
 
+/*
+The dark palette, aligned on the site's own.
+
+The site does not lighten its blue in dark mode: it inverts the hue outright,
+to gold with an amber / red / orange accent family. That inversion is the
+signature of the new zatsit, and reproducing it is the single change that
+makes a slide read as the current site rather than the previous one.
+
+--color-main keeps going through --color-main-dark, the indirection that was
+already there. The others are reassigned directly: giving each one a -dark
+companion would cost six levels of indirection for nothing, since this file
+carries both palettes anyway.
+*/
 .dark {
-    --color-fg: #e6e1e6;
-    --color-fg-muted: #b4b0b6;
-    --color-surface: #16171a;
-    --color-outline: #3a3d42;
+    --color-fg: #e3e3e3;
+    --color-fg-muted: #94a3b8;
+    --color-surface: #1b1b1d;
+    --color-surface-raised: rgba(255, 255, 255, 0.05);
+    --color-outline: #334155;
     --color-main: var(--color-main-dark);
+
+    --color-accent-1: #f59e0b;
+    --color-accent-2: #ef4444;
+    --color-accent-3: #f97316;
+
+    --logo-gradient-start: #f1be51;
+    --logo-gradient-mid: #f59e0b;
+    --logo-gradient-end: #ef4444;
+
+    --color-text-gradient: linear-gradient(135deg, #f1be51, #f59e0b, #ef4444);
+
+    /* The mesh drops in dark mode, as it does on the site. */
+    --decor-mesh: 0.16;
 
     --dm-window-bg: #1c1d21;
     --dm-chrome-bg: linear-gradient(to bottom, #2b2d33 0%, #23252a 100%);
-    --dm-chrome-border: #3a3d42;
+    --dm-chrome-border: #334155;
     --dm-tabs-bg: #23252a;
     --dm-tab-bg: #2b2d33;
-    --dm-tab-fg: #e6e1e6;
-    --dm-code-fg: #e6e1e6;
+    --dm-tab-fg: #e3e3e3;
+    --dm-code-fg: #e3e3e3;
     --dm-code-selection: #2f4a7a;
 }
 

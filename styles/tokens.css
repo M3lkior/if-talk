@@ -16,16 +16,39 @@ source order.
     --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
 
-    /* A talk overrides --color-main in its own .demoit/tokens.css. */
+    /*
+    The house palette, taken from corporate/src/styles/global.css in the
+    zats-websites repository.
+
+    This file is what emits it. A talk mirrors these values in its own
+    .demoit/tokens.css so that its utilities are generated against the right
+    vocabulary, but that copy produces nothing: it is imported with
+    `theme(reference)`, and a talk's tailwind.css carries no :root block at
+    all. Making the two diverge therefore repaints nothing.
+
+    The dark palette lives in the `.dark` block of demoit.src.css.
+    */
     --color-main: #0f15fd;
-    --color-main-dark: #7c81ff;
+    /* The site inverts the hue in dark mode -- gold, not a lighter blue. */
+    --color-main-dark: #f1be51;
 
-    --color-fg: #3d4043;
-    --color-fg-muted: #6b7075;
+    --color-fg: #1c1e21;
+    --color-fg-muted: #475569;
     --color-surface: #ffffff;
-    --color-outline: #d5d7da;
+    --color-surface-raised: #f8fafc;
+    --color-outline: #cbd5e1;
 
-    /* The letterbox around the stage, on screens whose aspect ratio differs. */
+    --color-accent-1: #06b6d4;
+    --color-accent-2: #3b82f6;
+    --color-accent-3: #6366f1;
+
+    /* Stops of the logo gradient, read by the inlined SVG of a cover. */
+    --logo-gradient-start: #0f15fd;
+    --logo-gradient-mid: #0a0ecc;
+    --logo-gradient-end: #020466;
+
+    /* The letterbox around the stage, on screens whose aspect ratio differs.
+       No equivalent on the site, and it is meant to stay neutral. */
     --color-void: #000000;
 
     /*
@@ -45,5 +68,7 @@ source order.
     --height-stage-large: 85%;
     --height-stage-xlarge: 100%;
 
-    --radius-card: 2rem;
+    /* --radius-lg on the site. The 2rem this used to be made every card of
+       the deck visibly rounder than anything zatsit.fr renders. */
+    --radius-card: 0.75rem;
 }

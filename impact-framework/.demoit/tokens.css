@@ -1,24 +1,40 @@
 /*
-Design tokens of this talk. Copied from styles/tokens.css and free to diverge:
-this is where the talk's palette lives.
+Mirror of styles/tokens.css: the vocabulary this talk's utilities are
+generated against.
 
-Must contain @theme blocks and nothing else -- tailwind.src.css imports it with
-`theme(reference)`, and Tailwind rejects a referenced file that carries any
-other rule.
+This file emits nothing. tailwind.src.css imports it with `theme(reference)`,
+which hands the names to the generator without producing a single variable --
+check tailwind.css, it carries no :root block. The values that actually apply
+are those of the :root and .dark of handlers/resources/demoit.css.
+
+Letting this file drift from the engine's therefore repaints nothing: it only
+generates utilities whose fallback is dead. The two are edited together.
+
+Must contain @theme blocks and nothing else -- tailwind.src.css imports it
+with `theme(reference)`, and Tailwind rejects a referenced file that carries
+any other rule.
 */
 @theme {
     --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Roboto Mono", ui-monospace, monospace;
 
-    /* The accent. #0f15fd is nearly black on a dark ground, hence the lighter
-       companion the dark palette swaps in. */
     --color-main: #0f15fd;
-    --color-main-dark: #7c81ff;
+    --color-main-dark: #f1be51;
 
-    --color-fg: #3d4043;
-    --color-fg-muted: #6b7075;
+    --color-fg: #1c1e21;
+    --color-fg-muted: #475569;
     --color-surface: #ffffff;
-    --color-outline: #d5d7da;
+    --color-surface-raised: #f8fafc;
+    --color-outline: #cbd5e1;
+
+    --color-accent-1: #06b6d4;
+    --color-accent-2: #3b82f6;
+    --color-accent-3: #6366f1;
+
+    --logo-gradient-start: #0f15fd;
+    --logo-gradient-mid: #0a0ecc;
+    --logo-gradient-end: #020466;
+
     --color-void: #000000;
 
     --height-stage-small: 40%;
@@ -26,5 +42,5 @@ other rule.
     --height-stage-large: 85%;
     --height-stage-xlarge: 100%;
 
-    --radius-card: 2rem;
+    --radius-card: 0.75rem;
 }
