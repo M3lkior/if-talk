@@ -340,13 +340,22 @@ The cover and the quotes push both layers.
 :has() rather than a class on .stage: a layout cannot reach its own container,
 which is written in index.tmpl.html and belongs to the engine. The selector is
 supported by every targeted browser, the chromedp of /pdf included.
+
+The :not([data-display="projector"]) is not belt and braces, it is the whole
+reason the profile still works here. A custom property is resolved from the
+nearest element that declares it, and specificity never enters into it across
+two different elements: :root[data-display="projector"] sets --decor-* on
+<html>, this rule sets them on .stage, a descendant. So without the guard the
+reinforcement would quietly win on every cover and every quote, and the
+projector profile would extinguish the decor on the working slides only --
+which is exactly what a screenshot of the cover under `projector` showed.
 */
-.stage:has(main.slide-hero) {
+:root:not([data-display="projector"]) .stage:has(main.slide-hero) {
     --decor-dots: 0.1;
     --decor-mesh: 0.45;
 }
 
-.dark .stage:has(main.slide-hero) {
+:root.dark:not([data-display="projector"]) .stage:has(main.slide-hero) {
     --decor-mesh: 0.26;
 }
 
