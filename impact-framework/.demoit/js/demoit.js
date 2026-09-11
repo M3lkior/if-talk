@@ -1004,28 +1004,38 @@ import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
 // *pending* loads settle, and a face nothing has laid out yet is not pending.
 // A missing Font Loading API must not mean no diagram, hence the fallback.
 //
-// KNOWN DEFECT, and it is this one figure only: its node labels are still
-// clipped on the right. The pre-migration render was not, and one intermediate
-// build during the migration was not either, but the state that produced it
-// could not be reconstructed by bisection. What was tried and ruled out, each
-// measured on a deterministic render: mermaid's `dark` and `base` themes,
-// `base` driven from the deck's own tokens, pinning fontFamily and fontSize
-// (also inside themeVariables), block padding, a local-only font stack for
-// `.mermaid`, rendering immediately versus after the font, keeping or dropping
-// the source-restore loop, and the `.dark .mermaid` rule below.
+// The node labels used to be clipped on the right, and the cause was the stage
+// rather than anything about fonts or themes: mermaid sizes each node from a
+// getBoundingClientRect() of its label, and that call reports the *transformed*
+// box. The stage scales everything inside it, so a label was measured
+// `--stage-scale` times too narrow and then painted into the SVG's own,
+// unscaled user units -- the text overflowing a box built for a smaller copy of
+// itself. It reproduced as a straight proportion: "Mock d'observations" came
+// out 59.6px wide in a 960px window, 130.6px in a 1920px one and 272.7px in a
+// 3840px one, for a string whose width depends on none of that.
 //
-// One real cause was found and fixed on the way: a `display: inline-block` on
-// `svg` in the chassis compressed the container mermaid measures and clipped
+// So the counter-scale below is the fix, and it goes on the container rather
+// than on the stage: a transform changes what is painted, never the layout, so
+// `.mermaid` keeps its size and position on the slide and nothing else on the
+// stage moves. The element is `visibility: hidden` until mermaid is done
+// anyway, so the scaled-up intermediate state is never on screen.
+//
+// One real cause was found and fixed before this one: a `display: inline-block`
+// on `svg` in the chassis compressed the container mermaid measures and clipped
 // the figure in both themes. See styles/demoit.src.css, which now restores
 // inline images for img and video only. Do not put padding on `.mermaid`
 // either, for the same reason.
+//
+// The diagram keeps mermaid's light theme in both modes -- see `.dark .mermaid`
+// in this talk's style.css.
 function renderMermaid() {
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
 
     // A render replaces the element's content with the SVG, so the original
     // source is kept aside: without it a second run would be handed mermaid's
     // own output to parse.
-    document.querySelectorAll('.mermaid, pre.mermaid').forEach(node => {
+    const nodes = document.querySelectorAll('.mermaid, pre.mermaid');
+    nodes.forEach(node => {
         if (node.dataset.source === undefined) {
             node.dataset.source = node.textContent;
         } else {
@@ -1034,7 +1044,20 @@ function renderMermaid() {
         delete node.dataset.processed;
     });
 
-    mermaid.run();
+    // Unset off the stage, where there is no transform to undo.
+    const scale = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--stage-scale'),
+    ) || 1;
+
+    nodes.forEach(node => {
+        node.style.transform = `scale(${1 / scale})`;
+    });
+
+    return mermaid.run().finally(() => {
+        nodes.forEach(node => {
+            node.style.transform = '';
+        });
+    });
 }
 
 if (document.fonts && document.fonts.load) {

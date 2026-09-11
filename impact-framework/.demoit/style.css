@@ -198,6 +198,16 @@ a:visited {
     visibility: visible;
 }
 
+/*
+Fill the pane. The figure keeps its proportions while doing so: mermaid leaves
+the svg its default preserveAspectRatio, so a viewport box wider or taller than
+the viewBox letterboxes the drawing instead of stretching it.
+
+A minimum rather than a maximum because mermaid writes the measured figure
+width as an inline `style="max-width: ..."`, and an inline declaration beats a
+stylesheet one -- a cap here would lose to it and leave the figure at its
+intrinsic size on a 1920px stage.
+*/
 .mermaid svg {
     min-inline-size: 100%;
     min-block-size: 100%;
