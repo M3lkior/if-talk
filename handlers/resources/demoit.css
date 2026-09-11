@@ -458,6 +458,10 @@
     display: grid;
   }
 
+  .hidden {
+    display: none;
+  }
+
   .size-12 {
     width: calc(var(--spacing) * 12);
     height: calc(var(--spacing) * 12);
@@ -586,6 +590,14 @@
 
   .text-fg-muted {
     color: var(--color-fg-muted);
+  }
+
+  .dark\:block:where(.dark, .dark *) {
+    display: block;
+  }
+
+  .dark\:hidden:where(.dark, .dark *) {
+    display: none;
   }
 }
 

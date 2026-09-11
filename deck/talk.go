@@ -55,6 +55,11 @@ type Talk struct {
 	Layout string `yaml:"layout"`
 	// Logos are the images the header and cover layouts display, in order.
 	Logos []string `yaml:"logos"`
+	// LogosDark are the dark-theme counterparts of Logos, in the same order.
+	// A talk that declares none renders Logos in both themes, which is what
+	// every talk did before this field existed -- the layouts emit the
+	// conditional class only when this list is non-empty.
+	LogosDark []string `yaml:"logosDark"`
 	// Footer is the text layouts may display at the bottom of a slide.
 	Footer string `yaml:"footer"`
 	// Theme is the rendering chassis the talk opts into.

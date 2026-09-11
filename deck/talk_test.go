@@ -91,6 +91,24 @@ func TestLoadTalkLeavesAnAbsentTitleEmpty(t *testing.T) {
 	}
 }
 
+func TestLoadTalkReadsTheDarkLogos(t *testing.T) {
+	t.Parallel()
+
+	folder := writeTalk(t, "logos:\n  - /images/a.svg\nlogosDark:\n  - /images/a-dark.svg\n")
+
+	talk, err := deck.LoadTalk(folder)
+	if err != nil {
+		t.Fatalf("got error %v, want none", err)
+	}
+
+	if got, want := len(talk.LogosDark), 1; got != want {
+		t.Fatalf("got %d dark logos, want %d", got, want)
+	}
+	if got, want := talk.LogosDark[0], "/images/a-dark.svg"; got != want {
+		t.Errorf("got dark logo %q, want %q", got, want)
+	}
+}
+
 func TestLoadTalkAcceptsAMissingFile(t *testing.T) {
 	t.Parallel()
 
