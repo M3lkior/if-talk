@@ -17,12 +17,22 @@ margin:0 auto` from a second rule, narrowed again to 100% by `.max`.
 
 min-block-size:0 is what lets a pane inside it take a percentage height: a flex
 item defaults to min-content and would otherwise refuse to shrink.
+
+The block padding is the gap between the header's rule and whatever the slide
+opens with. beercss's own .5rem was inline-only, so every pane of every split
+slide started at 0px under the rule and read as glued to it. The inline value
+matches slide-header's 1rem rather than beercss's .5rem, so a slide's first
+column lines up with the title above it instead of sitting 8px to its left.
+
+It costs the panes 2rem of height: an h-stage-xlarge pane is 100% of this
+element's *content* box, so it shrinks with the padding instead of overflowing.
 */
 @utility slide-main {
     flex: 1 1 0%;
     min-block-size: 0;
     inline-size: 100%;
-    padding-inline: 0.5rem;
+    padding-block: 1rem;
+    padding-inline: 1rem;
     overflow-x: hidden;
 }
 

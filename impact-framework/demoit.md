@@ -9,19 +9,11 @@ speakernotes: |
   ADEME: Agence de l'environnement et de la maîtrise de l'énergie part of Agence de la Transition Ecologique
 ---
 
-<div class="h-12"></div>
-<div class="h-12"></div>
-<div class="h-12"></div>
-<div class="h-12"></div>
-<div class="h-12"></div>
-
 <!--    <h3>D'après l'ADEME,</h3>-->
 
 ## *2,5%* des émissions de gaz à effet de serre de la France sont dues au numérique.
 
 ## *10%* de l’électricité en France est consommée par le numérique.
-
-<div class="h-12"></div>
 ---
 layout: default
 title: Et l'IA dans tout ça ?
@@ -77,7 +69,7 @@ class: slide-main slide-narrow slide-prose flex flex-col items-center justify-ce
 ---
 layout: default
 title: Je suis **Ludovic Dussart**
-class: slide-main slide-narrow h-stage-xlarge text-center
+class: slide-main slide-narrow flex flex-col justify-center text-center
 ---
 
 <!--
@@ -107,7 +99,7 @@ class: slide-main slide-narrow h-stage-xlarge text-center
 </div>
 -->
 
-<div class="grid grid-cols-12 gap-8">
+<div class="grid grid-cols-12 items-center gap-8">
   <div class="col-span-6">
     <div>
       <img class="rounded-card" style="block-size: 15rem; " src="/images/me.jpg">
@@ -336,7 +328,7 @@ speakernotes: |
   - carbon : eqCo2
 ---
 
-:::grid{class="grid grid-cols-12 gap-4 h-stage-xlarge"}
+:::grid{class="grid grid-cols-12 grid-rows-[auto_1fr] gap-4 h-stage-xlarge"}
 :::col{class="col-span-12"}
 #### Pour pouvoir commencer à *mesurer*, il faut d'abord *observer* et *récolter* de la data.
 :::
@@ -458,42 +450,37 @@ class: slide-main h-stage-xlarge
 ---
 layout: content
 title: IF - C'est quoi la suite ?
-class: slide-main h-stage-large text-center
+class: slide-main flex flex-col items-center justify-center gap-12 text-center
 ---
 
-<div class="h-12"></div>
 <h3>Imaginez la configuration des pipelines Impact Framework (IF) en WYSIWYG ?</h3>
 
-<div class="h-12"></div>
-<div class="h-12"></div>
-<div class="absolute left-1/2 -translate-x-1/2">
-  <h4 class="text-left"><em>Essayez</em> le framework.</h4>
-  <h4 class="text-left"><em>Contribuer</em> et faire évoluer l'existant.</h4>
-  <h4 class="text-left"><em>Proposez</em> de nouveaux plugins ?</h4>
-  <h4 class="text-left"><em>Constituez</em> vos propres manifests.</h4>
+<div class="text-left">
+  <h4><em>Essayez</em> le framework.</h4>
+  <h4><em>Contribuer</em> et faire évoluer l'existant.</h4>
+  <h4><em>Proposez</em> de nouveaux plugins ?</h4>
+  <h4><em>Constituez</em> vos propres manifests.</h4>
 </div>
-<div class="absolute bottom-0 left-1/2 -translate-x-1/2">
-  <img src="/images/hacktoberfest.png" style="width: 20rem"/>
-</div>
+
+<img src="/images/hacktoberfest.png" style="width: 20rem"/>
 
 ---
 layout: default
 title: Merci de votre attention. Des questions ?
-class: slide-main slide-narrow h-stage-xlarge text-center
+class: slide-main slide-narrow flex flex-col justify-center gap-8 text-center
 ---
 
 <div class="w-full">
-  <img src="/images/qa.png" style="block-size: 25rem;"/>
+  <img src="/images/qa.png" style="block-size: 22rem;"/>
 </div>
-<div class="absolute inset-x-0 bottom-0">
-  <div class="grid grid-cols-12 gap-8">
-    <div class="col-span-12"><h2 class="text-left"><em>Où me trouver ?</em></h2></div>
-    <div class="contact-row"><img src="/images/twitter.jpg"/><h5>@ldussart</h5></div>
-    <div class="contact-row"><img src="/images/bsky.png"/><h5>ldussart.bsky.social</h5></div>
-    <div class="contact-row"><img src="/images/linkedin.png"/><h5>Ludovic Dussart</h5></div>
-    <div class="col-span-12"><h2 class="text-left"><em>Où nous trouver ?</em></h2></div>
-    <div class="contact-row"><img src="/images/web.png"/><h5>https://zatsit.fr</h5></div>
-    <div class="contact-row"><img src="/images/bsky.png"/><h5>zatsit.bsky.social</h5></div>
-    <div class="contact-row"><img src="/images/blog.png"/><h5>https://blog.zatsit.fr</h5></div>
-  </div>
+
+<div class="grid grid-cols-12 items-center gap-8">
+  <div class="col-span-12"><h2 class="text-left"><em>Où me trouver ?</em></h2></div>
+  <div class="contact-row"><img src="/images/twitter.jpg"/><h5>@ldussart</h5></div>
+  <div class="contact-row"><img src="/images/bsky.png"/><h5>ldussart.bsky.social</h5></div>
+  <div class="contact-row"><img src="/images/linkedin.png"/><h5>Ludovic Dussart</h5></div>
+  <div class="col-span-12"><h2 class="text-left"><em>Où nous trouver ?</em></h2></div>
+  <div class="contact-row"><img src="/images/web.png"/><h5>https://zatsit.fr</h5></div>
+  <div class="contact-row"><img src="/images/bsky.png"/><h5>zatsit.bsky.social</h5></div>
+  <div class="contact-row"><img src="/images/blog.png"/><h5>https://blog.zatsit.fr</h5></div>
 </div>
